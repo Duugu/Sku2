@@ -6,29 +6,27 @@
 ## Version: 0.01
 ## X-Curse-Project-ID: 
 
-debug\core.lua
-
-locale\core.lua
-locale\locales\enUS.lua
-locale\locales\deDE.lua
+embeds.xml
 
 core.lua
 
+debug\core.lua
+
+dispatcher\core.lua
+
+locales\enUS.lua
+locales\deDE.lua
+locales\core.lua
 
 settings\settings.lua
+settings\profile\settings.lua
+settings\profile\navigation\settings.lua
 settings\character\settings.lua
-settings\character\softTargeting\settings.lua
-settings\character\softTargeting\enemy\settings.lua
+settings\faction\settings.lua
 
+utility\core.lua
+utility\tableHelpers.lua
 
-
-
-
-
-
-
-
-
-
-
-
+modules\core.lua
+modules\keyBindings.lua
+modules\audioMenu.lua

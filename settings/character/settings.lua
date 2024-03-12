@@ -1,28 +1,24 @@
-_, Sku2 = ...
+print("settings\\character\\settings.lua loading", SDL3)
 
-local tNode = "characterSettings"
-Sku2.settings[tNode] = {
-	name = "Character label",
-   desc = "Character desc",
+local L = Sku2.L
+
+Sku2.settings.args.char = {
+	name = "char",
 	type = "group",
-	args = {},
+	args = {
+		enabled = {
+			order = 1,
+			name = "character enabled name",
+			desc = "character enabled desc",
+			type = "toggle",
+			default = true,
+		},
+		enabled1 = {
+			order = 2,
+			name = "character enabled 1 name",
+			desc = "character enabled 1 desc",
+			type = "toggle",
+			default = false,
+		},
+	}
 }
-skuLoaderParentSettingsTable = Sku2.settings[tNode].args
-
-local tLeaf = "vocalizeMenuNumbers"
-skuLoaderParentSettingsTable[tLeaf] = {
-   --order = tOrder,
-   name = "vocalize MenuNumbers name",
-   desc = "vocalize MenuNumbers desc",
-   type = "toggle",
-}
-
-local tLeaf = "vocalizeSubmenus"
-skuLoaderParentSettingsTable[tLeaf] = {
-   --order = tOrder,
-   name = "vocalize Submenus name",
-   desc = "vocalize Submenus desc",
-   type = "toggle",
-}
-
-
