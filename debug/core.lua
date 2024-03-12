@@ -1,3 +1,16 @@
+--[[
+to do:
+   - add Sku2.debug.OutputErrorsToCopy
+   - add slash commands
+   - register events via dispatcher
+   - implment audio output in Sku2.debug.AudioError
+   - use Sku2.debug.SetErrorNotifications(aSkuChatNotification, aSkuAudioNotification, aBugsackAudioNotification) on settings loaded/changed
+   - use Sku2.debug.ClearErrors
+
+
+
+]]
+
 --print("debug\\core1.lua loading", SDL3)
 local L = Sku2.L
 
@@ -7,6 +20,10 @@ local BugGrabber = BugGrabber
 Sku2.debug = {}
 Sku2.debug.debugLevel = 3 -- 0 to 3 (0 is nothing)
 Sku2.debug.maxRepeatingErrors = -1 -- -1 for all
+Sku2.debug.bugChatNotification = true
+Sku2.debug.bugAaudioNotification = true
+Sku2.debug.bugAaudioNotificationOnePerSeconds = 5
+Sku2.debug.bugAaudioNotificationLastOutputTime = GetTimePreciseSec() - 100
 
 for x = 0, 3 do
    _G["SDL"..x] = "SkuDebugLevel"..x
@@ -54,40 +71,19 @@ end
 setprinthandler(Sku2.debug.Print)
 
 ---------------------------------------------------------------------------------------------------------
-function Sku2.debug.Error(aErrorText, aDebugLevel, aTime)
-   if not aErrorText then
-      return
-   end
-
-   if not aTime then
-      aTime = GetTimePreciseSec() - startTime
-   end
-
-   aErrorText = tostring(aErrorText)
-
-   if aDebugLevel == SDL0 then
-      debugLevel = 0
-   elseif aDebugLevel == SDL1 then
-      debugLevel = 1
-   elseif aDebugLevel == SDL2 then
-      debugLevel = 2
-   elseif aDebugLevel == SDL3 then
-      debugLevel = 3
-   else
-      debugLevel = 1
-   end
-
-   if debugLevel <= Sku2.debug.debugLevel then
-      if db[aErrorText] then
-         aErrorText = aErrorText.." (repeating)"
+function Sku2.debug.SetErrorNotifications(aSkuChatNotification, aSkuAudioNotification, aBugsackAudioNotification)
+   if aBugsackAudioNotification then
+      if aBugsackAudioNotification == false and _G["BugSack"] then
+         _G["BugSack"].db.mute = nil
+      elseif aBugsackAudioNotification == false and _G["BugSack"] then
+         _G["BugSack"].db.mute = true
       end
-      if not db[aErrorText] then
-         db[aErrorText] = 1
-         db[#db + 1] = {debugLevel = debugLevel, errorText = aErrorText, time = aTime}
-         print(string.format("%.3f", db[#db].time), "Sku Error ("..db[#db].debugLevel.."):", db[#db].errorText)
-      else
-         db[aErrorText] = db[aErrorText] + 1
-      end
+   end
+   if aSkuChatNotification then
+      Sku2.debug.bugChatNotification = aSkuChatNotification
+   end
+   if aSkuChatNotification then
+      Sku2.debug.bugChatNotification = aSkuAudioNotification
    end
 end
 
@@ -100,8 +96,27 @@ function Sku2.debug.ClearErrors()
 end
 
 ---------------------------------------------------------------------------------------------------------
+function Sku2.debug.AudioError(aError, aDetailed, aForce)
+   if Sku2.debug.bugAaudioNotification ~= true then
+      return
+   end
+   if GetTimePreciseSec() - Sku2.debug.bugAaudioNotificationLastOutputTime > Sku2.debug.bugAaudioNotificationOnePerSeconds then
+      Sku2.debug.bugAaudioNotificationLastOutputTime = GetTimePreciseSec()
+      if aError.counter < 2 then
+         print("<insert bug audio notification here>")
+
+
+
+      end
+   end
+end
+---------------------------------------------------------------------------------------------------------
 function Sku2.debug.PrintError(aError, aDetailed, aForce)
    --[[error = {number, session, counter, message, time, locals, stack}]]
+   if Sku2.debug.bugChatNotification ~= true then
+      return
+   end
+
    local tMessage
    if (aError.counter < Sku2.debug.maxRepeatingErrors or Sku2.debug.maxRepeatingErrors == -1) or aForce == true then
       tMessage = aError.number..": "..aError.time.." "..aError.counter.." x "..aError.message
@@ -109,47 +124,67 @@ function Sku2.debug.PrintError(aError, aDetailed, aForce)
       tMessage = aError.number..": "..aError.time.." "..aError.counter.." x "..aError.message.." (repeating)"
    end
    if tMessage then
-      if aDetailed then
+      if aDetailed and aError.stack then
          print(tMessage.."\n"..aError.stack)
       else
          print(tMessage)
       end
    end
 end
+
 ---------------------------------------------------------------------------------------------------------
-function Sku2.debug.PrintErrors(aNumberOfErrors, aDetailed)
+function Sku2.debug.OutputErrors(aNumberOfErrors, aDetailed, aFromStart)
+   if not BugGrabber then
+      return
+   end
+
    local errors = Sku2.debug:GetErrors(BugGrabber:GetSessionId())
    if not errors or #errors == 0 then
       return
    end
 
-   local tstart = #errors - aNumberOfErrors
+   local tend = #errors
+   local tstart = #errors - aNumberOfErrors + 1
    if tstart < 1 then
       tstart = 1
    end
 
-   for x = tstart, #errors do
+   if aFromStart then
+      tstart = 1
+      tend = aNumberOfErrors
+   end
+
+   for x = tstart, tend do
       errors[x].number = x
       Sku2.debug.PrintError(errors[x], aDetailed, true)
    end
 end
 ---------------------------------------------------------------------------------------------------------
-function Sku2.debug.PrintLastError(aDetailed, aForce)
+function Sku2.debug.OutputLastError(aDetailed, aForce)
+   if not BugGrabber then
+      return
+   end
+
    local errors = Sku2.debug:GetErrors(BugGrabber:GetSessionId())
    if not errors or #errors == 0 then
       return
    end
    errors[#errors].number = #errors
    Sku2.debug.PrintError(errors[#errors], aDetailed, aForce)
+   Sku2.debug.AudioError(errors[#errors], aDetailed, aForce)
 end
 
 ---------------------------------------------------------------------------------------------------------
 function Sku2.debug.OnError()
-   Sku2.debug.PrintLastError()
+   Sku2.debug.OutputLastError()
 end
 
 ---------------------------------------------------------------------------------------------------------
-function Sku2.debug:GetErrors(sessionId, a, b)
+function Sku2.debug:GetErrors(sessionId)
+   if not BugGrabber then
+      return
+   end
+
    if sessionId then
       local errors = {}
       local db = BugGrabber:GetDB()
@@ -184,12 +219,11 @@ function events:ADDON_LOADED(event, msg)
          local tSessionId = BugGrabber:GetSessionId()
          if tSessionId then
             local sessionData = Sku2.debug:GetErrors(tSessionId)
+            local sessionDataClean = {}
             if sessionData ~= nil and #sessionData > 0 then 
-               for x = 1, #sessionData do
-                  sessionData[x].number = x
-               end
-               print("--> Errors on loading:", #sessionData)
-               Sku2.debug.PrintErrors(#sessionData)
+               print("--> Errors on loading:", #sessionDataClean, (#sessionData - 1))
+               Sku2.debug.OutputErrors(#sessionData - 1, nil, true)
+               Sku2.debug.OnError()
             end
             BugGrabber.RegisterCallback(Sku2, "BugGrabber_BugGrabbed", Sku2.debug.OnError)
          end
@@ -199,21 +233,22 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 function events:MACRO_ACTION_BLOCKED(event, msg)   
-   Sku2.debug.Error(event..": "..msg)
+   --Sku2.debug.Error(event..": "..msg)
 end
 
 ---------------------------------------------------------------------------------------------------------
 function events:ADDON_ACTION_BLOCKED(event, msg)
-   Sku2.debug.Error(event..": "..msg)
+   --Sku2.debug.Error(event..": "..msg)
 end
 
 ---------------------------------------------------------------------------------------------------------
 function events:MACRO_ACTION_FORBIDDEN(event, msg)
-   Sku2.debug.Error(event..": "..msg)end
+   --Sku2.debug.Error(event..": "..msg)
+end
 
 ---------------------------------------------------------------------------------------------------------
 function events:ADDON_ACTION_FORBIDDEN(event, msg)
-   Sku2.debug.Error(event..": "..msg)
+   --Sku2.debug.Error(event..": "..msg)
 end
 
 ---------------------------------------------------------------------------------------------------------

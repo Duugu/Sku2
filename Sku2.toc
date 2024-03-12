@@ -1,9 +1,9 @@
 ## Interface: 30403
 ## Interface-Wrath: 30403
-## Title: Sku2 (0.01)
+## Title: Sku2 (0.02)
 ## SavedVariables: Sku2DB
 ## Dependencies: 
-## Version: 0.01
+## Version: 0.02
 ## X-Curse-Project-ID: 
 
 embeds.xml
