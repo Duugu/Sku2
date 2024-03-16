@@ -1,128 +1,107 @@
+--[[
+to do
+   - add dualspec values to settings>char
+   - set up flavor specific UI from prototypes
+
+]]
 print("modules\\core.lua loading", SDL3)
 
 local L = Sku2.L
 
-Sku2.modules = {}
-
---[[
-   code to add correct flavor code in modules
-]]
 ---------------------------------------------------------------------------------------------------------------------------------------
-Sku2.modules.MTs = {}
+-- set up modules code, settings, UI for current flavor 
+do
+   for moduleName, moduleObject in pairs(Sku2.modules) do
+      if type(moduleObject) == "table" and moduleObject._prototypes then
 
-Sku2.modules.MTs.__index = {__index = function(table, key)
-   --print("flavorCallMT", table, key, table["default"])
-   return table["default"]
-end}
-
-Sku2.modules.MTs.__newindex = {
-   __newindex = function(thisTable, newTable, func)
-      --print("flavorAddMT thisTable", thisTable, "newTable", newTable, "drei", drei)
-      rawset(thisTable, newTable, {})
-      thisTable[newTable].default = func
-      setmetatable(thisTable[newTable], Sku2.modules.MTs.__index)
-   end
-}
-
----------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules:SetModuleCodeForClientFlavor(aModule)
-   for funcName, funcTable in pairs(aModule.code) do
-      aModule[funcName] = funcTable[Sku2.clientFlavorString]
-   end
-   aModule.code = nil
-end
-
---[[
-   modules root core
-]]
----------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules:OnInitialize()
-   print("Sku2.modules:OnInitialize()", SDL3)
-   --init all modules
-   for i, v in pairs(Sku2.modules) do
-      if type(v) == "table" then
-         for i1, v1 in pairs(v) do
-            if type(v1) == "table" then
-               if v1.OnInitialize then
-                  v1:OnInitialize()
-               end
+         --set up flavor specific code
+         for funcName, funcObject in pairs(moduleObject._prototypes.code) do
+            if funcObject[Sku2.utility:GetClientFlavorString()] then
+               moduleObject[funcName] = funcObject[Sku2.utility:GetClientFlavorString()]
+            else
+               moduleObject[funcName] = funcObject.default
+            end
+            if type(moduleObject[funcName]) == "table" then
+               --remove the prototype metatable
+               setmetatable(moduleObject[funcName], nil)
             end
          end
+         
+         --set up flavor specific settings
+         local function settingsIteratorHelper(aSubgroup, aTab)
+            local tChildrenFound = {}
+            for settingName, settingObject in pairs(aSubgroup) do
+               local tValid
+               if settingObject.flavors ~= nil then
+                  for _, clientFlavorName in pairs(settingObject.flavors) do
+                     if clientFlavorName == Sku2.utility:GetClientFlavorString() then   
+                        tValid = true
+                     end
+                  end
+               else
+                  tValid = true
+               end
+               if tValid == true then
+                  tChildrenFound[settingName] = settingObject
+                  if settingObject.children ~= nil then
+                     tChildrenFound[settingName].children = settingsIteratorHelper(settingObject.children, aTab.." ")
+                  end
+                  if settingObject.defaultValue ~= nil then
+                     tChildrenFound[settingName].defaultValue = settingObject.defaultValue[Sku2.utility:GetClientFlavorString()] or settingObject.defaultValue["default"]
+                  else
+                     tChildrenFound[settingName].defaultValue = nil
+                  end
+                  if settingObject.menu ~= nil then
+                     tChildrenFound[settingName].menu = settingObject.menu[Sku2.utility:GetClientFlavorString()] or settingObject.menu["default"]
+                  else
+                     tChildrenFound[settingName].menu = nil
+                  end
+                  tChildrenFound[settingName].flavors = nil
+               end
+            end
+            return tChildrenFound
+         end
+
+         moduleObject.settings = {}
+         for settingTypeName, settingTypeObject in pairs(moduleObject._prototypes.settings) do
+            moduleObject.settings[settingTypeName] = settingsIteratorHelper(settingTypeObject, "")
+         end
+
+         --set up flavor specific UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         --we don't need the prototypes anymore
+         --is there any sense on deleting them?
+         --moduleObject._prototypes = nil
       end
    end
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+-- modules events
+---------------------------------------------------------------------------------------------------------------------------------------
+function Sku2.modules:OnInitialize()
+   print("modules"," OnInitialize", SDL3)
+
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 function Sku2.modules:OnEnable()
    -- Do more initialization here, that really enables the use of your addon. Register Events, Hook functions, Create Frames, Get information from the game that wasn't available in OnInitialize
-   print("Sku2.modules:OnEnable()", SDL3)
-   --enable all modules
-   for i, v in pairs(Sku2.modules) do
-      if type(v) == "table" then
-         for i1, v1 in pairs(v) do
-            if type(v1) == "table" then
-               if v1.OnEnable then
-                  v1:OnEnable()
-               end
-            end
-         end
-      end
-   end
-
-
-   -- --> test menu start
-   print("add test menu")
-   local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(Sku2.modules.core.audioMenu.menu.root, {"eins"}, Sku2.modules.core.audioMenu.genericMenuItem)
-   --tNewMenuEntry.isMultiselect = true
-   --tNewMenuEntry.filterable = true
-   tNewMenuEntry.buildChildrenFunc = function(self)
-      local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(self, {"Size"}, Sku2.modules.core.audioMenu.genericMenuItem)
-      tNewMenuEntry.dynamic = true
-      tNewMenuEntry.buildChildrenFunc = function(self)
-         local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(self, {"Small"}, Sku2.modules.core.audioMenu.genericMenuItem)
-         tNewMenuEntry.onEnterFunc = function(self)
-            print(" xxx Small onEnterFunc")
-         end
-         local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(self, {"Large"}, Sku2.modules.core.audioMenu.genericMenuItem)
-         tNewMenuEntry.onEnterFunc = function(self)
-            print(" xxx Large onEnterFunc", self.name)
-         end
-         tNewMenuEntry.actionFunc = function(self)
-            print(" xxx Large actionFunc", self.name)
-            self:Update(self.name.." NEW")
-         end
-         local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(self, {"Laroxx"}, Sku2.modules.core.audioMenu.genericMenuItem)
-         tNewMenuEntry.onEnterFunc = function(self)
-            print(" xxx Laroxx onEnterFunc", self.name)
-         end
-         tNewMenuEntry.actionFunc = function(self)
-            print(" xxx Laroxx actionFunc", self.name)
-            self:Update(self.name.." NEWXX")
-         end
-      end
-      local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(self, {"Quests"}, Sku2.modules.core.audioMenu.genericMenuItem)
-      tNewMenuEntry.dynamic = true
-      tNewMenuEntry.buildChildrenFunc = function(self)
-         local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(self, {"aaa", "bbb", "ccc"}, Sku2.modules.core.audioMenu.genericMenuItem)
-      end
-   end
-   local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(Sku2.modules.core.audioMenu.menu.root, {"zwei empty"}, Sku2.modules.core.audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(Sku2.modules.core.audioMenu.menu.root, {"zwei aa empty"}, Sku2.modules.core.audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(Sku2.modules.core.audioMenu.menu.root, {"zwei bb empty"}, Sku2.modules.core.audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(Sku2.modules.core.audioMenu.menu.root, {"zwei bbc empty"}, Sku2.modules.core.audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(Sku2.modules.core.audioMenu.menu.root, {"empty"}, Sku2.modules.core.audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(Sku2.modules.core.audioMenu.menu.root, {"empty"}, Sku2.modules.core.audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(Sku2.modules.core.audioMenu.menu.root, {"empty"}, Sku2.modules.core.audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(Sku2.modules.core.audioMenu.menu.root, {"empty"}, Sku2.modules.core.audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = Sku2.modules.core.audioMenu:InjectMenuItems(Sku2.modules.core.audioMenu.menu.root, {"vier empty"}, Sku2.modules.core.audioMenu.genericMenuItem)
-   -- <-- test menu end
-
+   print("modules", "OnEnable", SDL3)
+   
 end

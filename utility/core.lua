@@ -24,10 +24,13 @@ function Sku2.utility:GetClientFlavorString()
       end
    end
 
+   if tClientString == "wrath" then
+      tClientString = "classic"
+   end
+
    if not tClientString then
       Sku2.debug:Error("No valid client and flavor detected")
    end
 
-   print("Sku2.utility:GetClientFlavorString() > tClientString", tClientString, SDL3)
    return tClientString
 end

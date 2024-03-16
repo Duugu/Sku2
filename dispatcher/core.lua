@@ -1,11 +1,4 @@
-﻿--[[
-	SkuDispatcher:RegisterEventCallback("PLAYER_ENTERING_WORLD", function(self, aEventName)
-		print("PLAYER_ENTERING_WORLD", self, aEventName)
-		
-		--SkuDispatcher:UnregisterEventCallback("PLAYER_REGEN_ENABLED", self)
-	end, true)
-]]
---print("dispatcher\\core.lua loading", SDL3)
+﻿print("dispatcher\\core.lua loading", SDL3)
 
 local _G = _G
 

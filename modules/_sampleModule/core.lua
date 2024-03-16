@@ -3,21 +3,26 @@ print("modules\\_sampleModule\\core.lua loading", SDL3)
 local _G = _G
 local L = Sku2.L
 
-Sku2.modules._sampleModule = {}
-local this = Sku2.modules._sampleModule
+local moduleName = "_sampleModule"
+Sku2.modules[moduleName] = Sku2.modules:NewModule(moduleName)
+local this = Sku2.modules[moduleName]
 
---[[
-   module core
-]]
+---------------------------------------------------------------------------------------------------------------------------------------
+-- module events
 ---------------------------------------------------------------------------------------------------------------------------------------
 function this:OnInitialize()
-	print("Sku2.modules._sampleModule", "OnInitialize", SDL3)
-	Sku2.modules:SetModuleCodeForClientFlavor(this)
+	print(moduleName, "OnInitialize", SDL3)
 	
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 function this:OnEnable()
-	print("Sku2.modules._sampleModule", "OnEnable", SDL3)
+	print(moduleName, "OnEnable", SDL3)
+
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+function this:OnDisable()
+	print(moduleName, "OnDisable", SDL3)
 
 end

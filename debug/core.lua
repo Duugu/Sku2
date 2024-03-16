@@ -7,11 +7,9 @@ to do:
    - use Sku2.debug.SetErrorNotifications(aSkuChatNotification, aSkuAudioNotification, aBugsackAudioNotification) on settings loaded/changed
    - use Sku2.debug.ClearErrors
    - handle ACTION_BLOCKED, ACTION_FORBIDDEN events
-
-
 ]]
+print("debug\\core1.lua loading", SDL3)
 
---print("debug\\core1.lua loading", SDL3)
 local L = Sku2.L
 
 local originalPrint = getprinthandler()
@@ -27,13 +25,18 @@ Sku2.debug = {
 }
 
 --[[
-   global debug level constants for easier use with print() (we can't use just numbers for debug level, because print takes
+   global debug level consts for easier use with print() (we can't use just numbers for debug level, because print takes
    an unknown number of arguments and in our handler we do need to check if there is a debug level value)
 ]]
 for x = 0, 3 do
    _G["SDL"..x] = "SkuDebugLevel"..x
    _G["sdl"..x] = "SkuDebugLevel"..x
 end
+
+local addonLoaded = nil
+SkuDispatcher:RegisterEventCallback("ADDON_LOADED", function()
+   addonLoaded = true
+end, true)
 
 ---------------------------------------------------------------------------------------------------------
 function Sku2.debug.Print(...)
@@ -183,7 +186,7 @@ function Sku2.debug:Error(aMessage)
       _G["BugGrabber"]:StoreError(errorObject)
    end
 
-   if Sku2.addonLoaded then
+   if addonLoaded then
       Sku2.debug.OutputLastError()
    end
 end
@@ -351,6 +354,7 @@ function events:ADDON_LOADED(event, msg)
    end
 end
 
+--[[
 ---------------------------------------------------------------------------------------------------------
 function events:MACRO_ACTION_BLOCKED(event, msg)   
    --Sku2.debug:Error(event..": "..msg)
@@ -370,3 +374,4 @@ end
 function events:ADDON_ACTION_FORBIDDEN(event, msg)
    --Sku2.debug:Error(event..": "..msg)
 end
+]]

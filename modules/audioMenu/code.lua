@@ -1,48 +1,32 @@
-print("modules\\core\\audiomenu.lua loading", SDL3)
+print("modules\\_sampleModule\\code.lua loading", SDL3)
 
 local _G = _G
 local L = Sku2.L
 
-Sku2.modules.core.audioMenu = {}
-local this = Sku2.modules.core.audioMenu
+local moduleName = "audioMenu"
+Sku2.modules[moduleName]._prototypes = Sku2.modules[moduleName]._prototypes or {}
+Sku2.modules[moduleName]._prototypes.code = {}
+local prototype = Sku2.modules[moduleName]._prototypes.code
+setmetatable(prototype, Sku2.modules.MTs.__newindex)
+local this = Sku2.modules[moduleName]
 
+---------------------------------------------------------------------------------------------------------------------------------------
+--module code
+---------------------------------------------------------------------------------------------------------------------------------------
 this.menu = {}
 this.currentMenuPosition = nil
 this.filterString = ""
-
---[[
-	locals
-]]
----------------------------------------------------------------------------------------------------------------------------------------
-local menuAccessKeysChars = {" ", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "ö", "ü", "ä", "ß", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "Ä", "Ö", "Ü", "shift-,",}
-for i, v in pairs(menuAccessKeysChars) do
-	menuAccessKeysChars[v] = v
+this.menuAccessKeysChars = {" ", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "ö", "ü", "ä", "ß", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "Ä", "Ö", "Ü", "shift-,",}
+for i, v in pairs(this.menuAccessKeysChars) do
+	this.menuAccessKeysChars[v] = v
 end
-local menuAccessKeysNumbers = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
-for i, v in pairs(menuAccessKeysNumbers) do
-	menuAccessKeysNumbers[v] = v
-end
-
---[[
-	module core
-]]
----------------------------------------------------------------------------------------------------------------------------------------
-function this:OnInitialize()
-	print("Sku2.modules.core.audioMenu:OnInitialize()", SDL3)
-	this:CreateMenuFrame()
-	this.menu.root = this:InjectMenuItems(this.menu, {"root"}, this.genericMenuItem)
+this.menuAccessKeysNumbers = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
+for i, v in pairs(this.menuAccessKeysNumbers) do
+	this.menuAccessKeysNumbers[v] = v
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function this:OnEnable()
-	print("Sku2.modules.core.audioMenu:OnEnable()", SDL3)
-end
-
---[[
-	generic menu
-]]
----------------------------------------------------------------------------------------------------------------------------------------
--- generic menu item template
+--generic menu item template
 this.genericMenuItem = {
 	name = "generic name",
 	index = nil,
@@ -56,8 +40,6 @@ this.genericMenuItem = {
 	onEnterCallbackFunc = nil,
 	--isSelect = false,
 	--selectTarget = nil,
-	--dynamic = false,
-	--filterable = false,
 
 	----function handlers
 	Update = function(self, aNewName)
@@ -68,14 +50,12 @@ this.genericMenuItem = {
 		end)
 	end,
 	Action = function(self)
-		--print("--- Action generic", self, self.name)
 		if self.actionFunc then
 			self:actionFunc()
 			self:OnAction()
 		end
 	end,
 	Prev = function(self, aToNonEmpty)
-		--print("--- Prev generic", self, self.index, self.name, aToNonEmpty)
 		if self.prev then
 			if aToNonEmpty and self.prev.empty == true then
 				local out = false
@@ -97,7 +77,6 @@ this.genericMenuItem = {
 		end
 	end,
 	Next = function(self, aToNonEmpty)
-		--print("--- Next generic", self, self.index, self.name, aToNonEmpty)
 		if self.next then
 			if aToNonEmpty and self.next.empty == true then
 				local out = false
@@ -114,21 +93,19 @@ this.genericMenuItem = {
 				self.next:OnEnter()
 			end		
 		end
-   end,
+	end,
 	First = function(self)
-		--print("--- First generic", self, self.index, self.name)
 		if self.parent and self.parent.children[1].name ~= self.name then
 			self:OnLeave()
 			self.parent.children[1]:OnEnter()
 		end
-   end,
+	end,
 	Last = function(self)
-		--print("--- Last generic", self, self.index, self.name)
 		if self.parent and self.parent.children[#self.parent.children].name ~= self.name then
 			self:OnLeave()
 			self.parent.children[#self.parent.children]:OnEnter()
 		end
-   end,
+	end,
 	Right = function(self)
 		if string.find(self.name, L["Filter"]..";") == nil then
 			if self.buildChildrenFunc then
@@ -143,23 +120,21 @@ this.genericMenuItem = {
 				end
 			end
 		end
-   end,
+	end,
 	Back = function(self)
-		--print("--- Back generic", self, self.name)
 		if self.parent and self.parent.name and self.parent.name ~= "root" then
 			self:OnLeave()
 			self.parent:OnEnter()
 		end
-   end,
+	end,
 
 	----event handlers
 	OnKey = function(self, aKey)
-		--print("   OnKey", aKey)
 		if not self.parent.children then
 			return
 		end
 		local tNewMenuItem
-		if menuAccessKeysChars[aKey] then
+		if this.menuAccessKeysChars[aKey] then
 			for x= 1, #self.parent.children do
 				if not tNewMenuItem then
 					if string.lower(string.sub(self.parent.children[x].name, 1, 1)) == string.lower(aKey) then
@@ -167,7 +142,7 @@ this.genericMenuItem = {
 					end
 				end
 			end
-		elseif menuAccessKeysNumbers[aKey] then
+		elseif this.menuAccessKeysNumbers[aKey] then
 			if not tNewMenuItem then
 				aKey = tonumber(aKey)
 				if self.parent.children[aKey] then
@@ -179,28 +154,27 @@ this.genericMenuItem = {
 			self:OnLeave()
 			tNewMenuItem:OnEnter()
 		end
-   end,
+	end,
 	OnLeave = function(self)
-		--print("   OnLeave generic", self, self.index, self.name)
-   end,
+		
+	end,
 	OnEnter = function(self)
 		print("   OnEnter generic", self, self.index, self.name)
 		this.currentMenuPosition = self
 		if self.onEnterCallbackFunc then
 			self:onEnterCallbackFunc()
 		end
-   end,
+	end,
 	OnBuildChildren = function(self)
-		--print("   OnBuildChildren generic", self, self.name)
+		
 	end,
 	OnUpdate = function(self)
-		--print("   OnUpdate generic", self, self.name)
+		
 	end,
 	OnAction = function(self)
-		--print("   OnAction generic", self, self.name)
+		
 	end,
 }
-
 setmetatable(this.genericMenuItem, {
 	__add = function(thisTable, newTable)
 		local function TableCopy(t, deep, seen)
@@ -229,7 +203,7 @@ setmetatable(this.genericMenuItem, {
 )
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function this:InjectMenuItems(aParentMenu, aNewItems, aItemTemplate)
+function prototype:InjectMenuItems(aParentMenu, aNewItems, aItemTemplate)
 	local rValue = nil
 	if aItemTemplate then
 		local tParentMenu = aParentMenu.children or aParentMenu
@@ -254,12 +228,12 @@ function this:InjectMenuItems(aParentMenu, aNewItems, aItemTemplate)
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function this:CreateMenuFrame()
-	print("Sku2.modules.core.audioMenu:CreateMenuFrame()", SDL3)
+function prototype:CreateMenuFrame()
+	print("audioMenu CreateMenuFrame()", SDL3)
 	--frame to insecure handle menu key binds
 	local tFrame = CreateFrame("Button", "Sku2ModulesAudioMenuControlFrame", UIParent, "SecureActionButtonTemplate")
 	tFrame.Open = function()
-		this:OpenMenu()
+		this:OpenMenu() 
 	end
 	tFrame.Close = function()
 		this.filterString = ""
@@ -274,7 +248,7 @@ function this:CreateMenuFrame()
 		if aKey == "SPACE" then
 			aKey = " "
 		end
-		if menuAccessKeysChars[aKey] then
+		if this.menuAccessKeysChars[aKey] then
 			aKey = string.lower(aKey)
 		end
 
@@ -326,7 +300,7 @@ function this:CreateMenuFrame()
 			end
 		end
 
-		if menuAccessKeysChars[aKey] or (menuAccessKeysNumbers[aKey]) then
+		if this.menuAccessKeysChars[aKey] or (this.menuAccessKeysNumbers[aKey]) then
 			this.currentMenuPosition:OnKey(aKey)
 		end
 
@@ -334,7 +308,7 @@ function this:CreateMenuFrame()
 		this.filterString = this.filterString or ""
 		if this.currentMenuPosition then
 			if this.currentMenuPosition.parent then
-				if menuAccessKeysChars[aKey] or menuAccessKeysNumbers[aKey] then
+				if this.menuAccessKeysChars[aKey] or this.menuAccessKeysNumbers[aKey] then
 					if aKey == "shift-," then aKey = ";" end
 					if this.filterString == "" then
 						--SkuCore:Debug("empty = rep")
@@ -359,6 +333,10 @@ function this:CreateMenuFrame()
 				end
 			end
 		end
+
+		--more key handlers
+
+
 
 
 
@@ -413,8 +391,8 @@ function this:CreateMenuFrame()
 			self:SetAttribute("MenuIsOpen", false)
 		end
 	]=]
-	_onClickBody = Sku2.utility.tableHelpers.AddTableToSecureHandlerBody(b, "menuAccessKeysChars", menuAccessKeysChars, _onClickBody)
-	_onClickBody = Sku2.utility.tableHelpers.AddTableToSecureHandlerBody(b, "menuAccessKeysNumbers", menuAccessKeysNumbers, _onClickBody)
+	_onClickBody = Sku2.utility.tableHelpers.AddTableToSecureHandlerBody(b, "menuAccessKeysChars", this.menuAccessKeysChars, _onClickBody)
+	_onClickBody = Sku2.utility.tableHelpers.AddTableToSecureHandlerBody(b, "menuAccessKeysNumbers", this.menuAccessKeysNumbers, _onClickBody)
 	b:SetAttribute("MenuIsOpen", false)
 	b:SetFrameRef("Sku2ModulesAudioMenuControlFrame", tFrame)
 	b:SetAttribute("_onclick", _onClickBody)
@@ -423,9 +401,8 @@ function this:CreateMenuFrame()
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function this:OpenMenu()
-	print("Sku2.modules.core.audioMenu:OpenMenu()", SDL3)
-	--_G["Sku2ModulesAudioMenuControlFrame"]:Show()
+function prototype:OpenMenu()
+	print("audioMenu:OpenMenu()", SDL3)
 	this:StartStopBackgroundSound(true)
 	PlaySound(88)
 
@@ -434,9 +411,8 @@ function this:OpenMenu()
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function this:CloseMenu()
-	print("Sku2.modules.core.audioMenu:CloseMenu()", SDL3)
-	--_G["Sku2ModulesAudioMenuControlFrame"]:Hide()
+function prototype:CloseMenu()
+	print("audioMenu:CloseMenu()", SDL3)
 	this:StartStopBackgroundSound(false)
 	PlaySound(89)
 
@@ -445,9 +421,9 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 local tOldChildren = false
-function this:ApplyFilter()
+function prototype:ApplyFilter()
+	print("audioMenu:ApplyFilter afilterString", this.filterString, tOldChildren, SDL3)
 	local afilterString = this.filterString
-	print("Sku2.modules.core.audioMenu:ApplyFilter afilterString", afilterString, tOldChildren, SDL3)
 
 	if not this.currentMenuPosition.parent.children then
 		this.filterString = ""
@@ -546,8 +522,8 @@ function this:ApplyFilter()
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function this:StartStopBackgroundSound(aStart)
-	print("Sku2.modules.core.audioMenu:StartStopBackgroundSound(aStart)", aStart, SDL3)
+function prototype:StartStopBackgroundSound(aStart)
+	print("audioMenu:StartStopBackgroundSound(aStart)", aStart, SDL3)
 	
 end
 
