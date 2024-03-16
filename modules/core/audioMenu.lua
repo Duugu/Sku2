@@ -1,13 +1,18 @@
-print("modules\\audiomenu.lua loading", SDL3)
+print("modules\\core\\audiomenu.lua loading", SDL3)
 
 local _G = _G
 local L = Sku2.L
 
-Sku2.modules.audioMenu = {}
-Sku2.modules.audioMenu.menu = {}
-Sku2.modules.audioMenu.currentMenuPosition = nil
-Sku2.modules.audioMenu.filterString = ""
+Sku2.modules.core.audioMenu = {}
+local this = Sku2.modules.core.audioMenu
 
+this.menu = {}
+this.currentMenuPosition = nil
+this.filterString = ""
+
+--[[
+	locals
+]]
 ---------------------------------------------------------------------------------------------------------------------------------------
 local menuAccessKeysChars = {" ", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "ö", "ü", "ä", "ß", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "Ä", "Ö", "Ü", "shift-,",}
 for i, v in pairs(menuAccessKeysChars) do
@@ -18,21 +23,27 @@ for i, v in pairs(menuAccessKeysNumbers) do
 	menuAccessKeysNumbers[v] = v
 end
 
+--[[
+	module core
+]]
 ---------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules.audioMenu:OnInitialize()
-	print("Sku2.modules.audioMenu:OnInitialize()", SDL3)
-	Sku2.modules.audioMenu:CreateMenuFrame()
-	Sku2.modules.audioMenu.menu.root = Sku2.modules.audioMenu:InjectMenuItems(Sku2.modules.audioMenu.menu, {"root"}, Sku2.modules.audioMenu.genericMenuItem)
+function this:OnInitialize()
+	print("Sku2.modules.core.audioMenu:OnInitialize()", SDL3)
+	this:CreateMenuFrame()
+	this.menu.root = this:InjectMenuItems(this.menu, {"root"}, this.genericMenuItem)
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules.audioMenu:OnEnable()
-	print("Sku2.modules.audioMenu:OnEnable()", SDL3)
+function this:OnEnable()
+	print("Sku2.modules.core.audioMenu:OnEnable()", SDL3)
 end
 
+--[[
+	generic menu
+]]
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- generic menu item template
-Sku2.modules.audioMenu.genericMenuItem = {
+this.genericMenuItem = {
 	name = "generic name",
 	index = nil,
 	empty = false,
@@ -125,8 +136,8 @@ Sku2.modules.audioMenu.genericMenuItem = {
 				self:buildChildrenFunc()
 				self:OnBuildChildren()
 				if self.children and self.children[1] then
-					Sku2.modules.audioMenu.filterString = ""
-					Sku2.modules.audioMenu:ApplyFilter()
+					this.filterString = ""
+					this:ApplyFilter()
 					self:OnLeave()
 					self.children[1]:OnEnter()
 				end
@@ -174,7 +185,7 @@ Sku2.modules.audioMenu.genericMenuItem = {
    end,
 	OnEnter = function(self)
 		print("   OnEnter generic", self, self.index, self.name)
-		Sku2.modules.audioMenu.currentMenuPosition = self
+		this.currentMenuPosition = self
 		if self.onEnterCallbackFunc then
 			self:onEnterCallbackFunc()
 		end
@@ -190,7 +201,7 @@ Sku2.modules.audioMenu.genericMenuItem = {
 	end,
 }
 
-setmetatable(Sku2.modules.audioMenu.genericMenuItem, {
+setmetatable(this.genericMenuItem, {
 	__add = function(thisTable, newTable)
 		local function TableCopy(t, deep, seen)
 			seen = seen or {}
@@ -218,7 +229,7 @@ setmetatable(Sku2.modules.audioMenu.genericMenuItem, {
 )
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules.audioMenu:InjectMenuItems(aParentMenu, aNewItems, aItemTemplate)
+function this:InjectMenuItems(aParentMenu, aNewItems, aItemTemplate)
 	local rValue = nil
 	if aItemTemplate then
 		local tParentMenu = aParentMenu.children or aParentMenu
@@ -243,23 +254,23 @@ function Sku2.modules.audioMenu:InjectMenuItems(aParentMenu, aNewItems, aItemTem
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules.audioMenu:CreateMenuFrame()
-	print("Sku2.modules.audioMenu:CreateMenuFrame()", SDL3)
+function this:CreateMenuFrame()
+	print("Sku2.modules.core.audioMenu:CreateMenuFrame()", SDL3)
 	--frame to insecure handle menu key binds
 	local tFrame = CreateFrame("Button", "Sku2ModulesAudioMenuControlFrame", UIParent, "SecureActionButtonTemplate")
 	tFrame.Open = function()
-		Sku2.modules.audioMenu:OpenMenu()
+		this:OpenMenu()
 	end
 	tFrame.Close = function()
-		Sku2.modules.audioMenu.filterString = ""
-		Sku2.modules.audioMenu:ApplyFilter()
-		Sku2.modules.audioMenu:CloseMenu()
+		this.filterString = ""
+		this:ApplyFilter()
+		this:CloseMenu()
 	end
 	tFrame.FilterLastInputTime = GetTime()
 	tFrame.FilterLastInputTimeout = 0.5
 	tFrame.OnKeyPressTimer = GetTimePreciseSec()
 	tFrame:SetScript("OnClick", function(self, aKey, aDown)
-		--print("Sku2ModulesAudioMenuControlFrame OnClick", self, aKey, aDown)
+		print("Sku2ModulesAudioMenuControlFrame OnClick", self, aKey, aDown, SDL3)
 		if aKey == "SPACE" then
 			aKey = " "
 		end
@@ -267,21 +278,11 @@ function Sku2.modules.audioMenu:CreateMenuFrame()
 			aKey = string.lower(aKey)
 		end
 
-		if IsAltKeyDown() == true then
-			tFullKey = "ALT-"..tFullKey
-		end
-		if IsControlKeyDown() == true then
-			tFullKey = "CTRL-"..tFullKey
-		end
-		if IsShiftKeyDown() == true then
-			tFullKey = "SHIFT-"..tFullKey
-		end
-
 		if aKey == "CTRL-RIGHT" then
-			if Sku2.modules.audioMenu.currentMenuPosition then
-				if Sku2.modules.audioMenu.currentMenuPosition.name ~= "" then
-					--SkuOptions.Voice:OutputStringBTtts(Sku2.modules.audioMenu.currentMenuPosition.name, false, true, 0, false, nil, nil, 2, true) -- for strings with lookup in string index
-					print(Sku2.modules.audioMenu.currentMenuPosition.name)
+			if this.currentMenuPosition then
+				if this.currentMenuPosition.name ~= "" then
+					--SkuOptions.Voice:OutputStringBTtts(this.currentMenuPosition.name, false, true, 0, false, nil, nil, 2, true) -- for strings with lookup in string index
+					print(this.currentMenuPosition.name)
 				end
 			end
 			return
@@ -296,64 +297,64 @@ function Sku2.modules.audioMenu:CreateMenuFrame()
 
 		--generic menu control key binds
 		if aKey == "UP" then
-			Sku2.modules.audioMenu.currentMenuPosition:Prev(tIsDouble)
+			this.currentMenuPosition:Prev(tIsDouble)
 		end
 		if aKey == "DOWN" then
-			Sku2.modules.audioMenu.currentMenuPosition:Next(tIsDouble)
+			this.currentMenuPosition:Next(tIsDouble)
 		end
 		if aKey == "RIGHT" then
-			Sku2.modules.audioMenu.currentMenuPosition:Right()
+			this.currentMenuPosition:Right()
 		end
 		if aKey == "LEFT" then --or aKey == "BACKSPACE" then
-			Sku2.modules.audioMenu.filterString = ""
-			Sku2.modules.audioMenu:ApplyFilter()
-			Sku2.modules.audioMenu.currentMenuPosition:Back()
+			this.filterString = ""
+			this:ApplyFilter()
+			this.currentMenuPosition:Back()
 		end
 		if aKey == "HOME" then
-			Sku2.modules.audioMenu.currentMenuPosition:First()
+			this.currentMenuPosition:First()
 		end
 		if aKey == "END" then
-			Sku2.modules.audioMenu.currentMenuPosition:Last()
+			this.currentMenuPosition:Last()
 		end		
 		if aKey == "ENTER" then
-			Sku2.modules.audioMenu.currentMenuPosition:Action()
+			this.currentMenuPosition:Action()
 		end
 		if aKey == "BACKSPACE" then
-			if string.len(Sku2.modules.audioMenu.filterString) > 1  then
-				Sku2.modules.audioMenu.filterString = ""
-				Sku2.modules.audioMenu:ApplyFilter()
+			if string.len(this.filterString) > 1  then
+				this.filterString = ""
+				this:ApplyFilter()
 			end
 		end
 
 		if menuAccessKeysChars[aKey] or (menuAccessKeysNumbers[aKey]) then
-			Sku2.modules.audioMenu.currentMenuPosition:OnKey(aKey)
+			this.currentMenuPosition:OnKey(aKey)
 		end
 
 		--filter
-		Sku2.modules.audioMenu.filterString = Sku2.modules.audioMenu.filterString or ""
-		if Sku2.modules.audioMenu.currentMenuPosition then
-			if Sku2.modules.audioMenu.currentMenuPosition.parent then
+		this.filterString = this.filterString or ""
+		if this.currentMenuPosition then
+			if this.currentMenuPosition.parent then
 				if menuAccessKeysChars[aKey] or menuAccessKeysNumbers[aKey] then
 					if aKey == "shift-," then aKey = ";" end
-					if Sku2.modules.audioMenu.filterString == "" then
+					if this.filterString == "" then
 						--SkuCore:Debug("empty = rep")
-						Sku2.modules.audioMenu.filterString = aKey
-					elseif string.len(Sku2.modules.audioMenu.filterString) == 1 and ((GetTime() - self.FilterLastInputTime) < self.FilterLastInputTimeout) then
+						this.filterString = aKey
+					elseif string.len(this.filterString) == 1 and ((GetTime() - self.FilterLastInputTime) < self.FilterLastInputTimeout) then
 						--SkuCore:Debug("1 and in time = add")
-						Sku2.modules.audioMenu.filterString = Sku2.modules.audioMenu.filterString..aKey
+						this.filterString = this.filterString..aKey
 						aKey = ""
-					elseif  string.len(Sku2.modules.audioMenu.filterString) > 1  then
+					elseif  string.len(this.filterString) > 1  then
 						--SkuCore:Debug("> 1 = add")
-						Sku2.modules.audioMenu.filterString = Sku2.modules.audioMenu.filterString..aKey
+						this.filterString = this.filterString..aKey
 						aKey = ""
 					else
 						--SkuCore:Debug("1 and out of time = rep")
-						Sku2.modules.audioMenu.filterString = aKey
+						this.filterString = aKey
 					end
 					self.FilterLastInputTime = GetTime()
 
-					if string.len(Sku2.modules.audioMenu.filterString) > 1  then
-						Sku2.modules.audioMenu:ApplyFilter()
+					if string.len(this.filterString) > 1  then
+						this:ApplyFilter()
 					end
 				end
 			end
@@ -422,40 +423,34 @@ function Sku2.modules.audioMenu:CreateMenuFrame()
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules.audioMenu:OpenMenu()
-	print("Sku2.modules.audioMenu:OpenMenu()", SDL3)
+function this:OpenMenu()
+	print("Sku2.modules.core.audioMenu:OpenMenu()", SDL3)
 	--_G["Sku2ModulesAudioMenuControlFrame"]:Show()
-	Sku2.modules.audioMenu:StartStopBackgroundSound(true)
+	this:StartStopBackgroundSound(true)
 	PlaySound(88)
 
-	Sku2.modules.audioMenu.currentMenuPosition = Sku2.modules.audioMenu.menu.root.children[1]
-	Sku2.modules.audioMenu.currentMenuPosition:OnEnter()
+	this.currentMenuPosition = this.menu.root.children[1]
+	this.currentMenuPosition:OnEnter()
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules.audioMenu:CloseMenu()
-	print("Sku2.modules.audioMenu:CloseMenu()", SDL3)
+function this:CloseMenu()
+	print("Sku2.modules.core.audioMenu:CloseMenu()", SDL3)
 	--_G["Sku2ModulesAudioMenuControlFrame"]:Hide()
-	Sku2.modules.audioMenu:StartStopBackgroundSound(false)
+	this:StartStopBackgroundSound(false)
 	PlaySound(89)
 
-	Sku2.modules.audioMenu.currentMenuPosition = nil
-end
-
----------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules.audioMenu:StartStopBackgroundSound(aStart)
-	print("Sku2.modules.audioMenu:StartStopBackgroundSound(aStart)", aStart, SDL3)
-	
+	this.currentMenuPosition = nil
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 local tOldChildren = false
-function Sku2.modules.audioMenu:ApplyFilter()
-	local afilterString = Sku2.modules.audioMenu.filterString
-	print("Sku2.modules.audioMenu:ApplyFilter afilterString", afilterString, tOldChildren, SDL3)
+function this:ApplyFilter()
+	local afilterString = this.filterString
+	print("Sku2.modules.core.audioMenu:ApplyFilter afilterString", afilterString, tOldChildren, SDL3)
 
-	if not Sku2.modules.audioMenu.currentMenuPosition.parent.children then
-		Sku2.modules.audioMenu.filterString = ""
+	if not this.currentMenuPosition.parent.children then
+		this.filterString = ""
 		return
 	end
 
@@ -468,13 +463,13 @@ function Sku2.modules.audioMenu:ApplyFilter()
 	if afilterString ~= "" then
 		if tOldChildren ~= false then
 			--SkuCore:Debug("ApplyFilter: is already filtered; will unfilter first", tOldChildren)
-			local tFilter = Sku2.modules.audioMenu.filterString
-			Sku2.modules.audioMenu.filterString = ""
-			Sku2.modules.audioMenu:ApplyFilter()
-			Sku2.modules.audioMenu.filterString = tFilter
+			local tFilter = this.filterString
+			this.filterString = ""
+			this:ApplyFilter()
+			this.filterString = tFilter
 		end
 
-		tOldChildren = Sku2.modules.audioMenu.currentMenuPosition.parent.children
+		tOldChildren = this.currentMenuPosition.parent.children
 
 		local tChildrenFiltered = {}
 		local tFilterEntry = Sku2.utility.tableHelpers:TableCopy(tOldChildren[1])
@@ -521,31 +516,38 @@ function Sku2.modules.audioMenu:ApplyFilter()
 			end
 		end
 
-		Sku2.modules.audioMenu.currentMenuPosition.parent.children = tChildrenFiltered
-		Sku2.modules.audioMenu.currentMenuPosition:First()
+		this.currentMenuPosition.parent.children = tChildrenFiltered
+		this.currentMenuPosition:First()
 	
 	elseif afilterString == "" then
 		if tOldChildren ~= false then
-			Sku2.modules.audioMenu.currentMenuPosition.parent.children = tOldChildren
-			for x = 1, #Sku2.modules.audioMenu.currentMenuPosition.parent.children do
-				if Sku2.modules.audioMenu.currentMenuPosition.parent.children[x+1] then
-					Sku2.modules.audioMenu.currentMenuPosition.parent.children[x].next = Sku2.modules.audioMenu.currentMenuPosition.parent.children[x+1]
+			this.currentMenuPosition.parent.children = tOldChildren
+			for x = 1, #this.currentMenuPosition.parent.children do
+				if this.currentMenuPosition.parent.children[x+1] then
+					this.currentMenuPosition.parent.children[x].next = this.currentMenuPosition.parent.children[x+1]
 				else
-					Sku2.modules.audioMenu.currentMenuPosition.parent.children[x].next = nil
+					this.currentMenuPosition.parent.children[x].next = nil
 				end
-				if Sku2.modules.audioMenu.currentMenuPosition.parent.children[x-1] then
-					Sku2.modules.audioMenu.currentMenuPosition.parent.children[x].prev = Sku2.modules.audioMenu.currentMenuPosition.parent.children[x-1]
+				if this.currentMenuPosition.parent.children[x-1] then
+					this.currentMenuPosition.parent.children[x].prev = this.currentMenuPosition.parent.children[x-1]
 				else
-					Sku2.modules.audioMenu.currentMenuPosition.parent.children[x].prev = nil
+					this.currentMenuPosition.parent.children[x].prev = nil
 				end
 			end
-			if string.find(Sku2.modules.audioMenu.currentMenuPosition.name, L["Filter"]..";") then
-				Sku2.modules.audioMenu.currentMenuPosition:First()
+			if string.find(this.currentMenuPosition.name, L["Filter"]..";") then
+				this.currentMenuPosition:First()
 			else
-				Sku2.modules.audioMenu.currentMenuPosition:OnEnter()
+				this.currentMenuPosition:OnEnter()
 			end
 			tOldChildren = false
-			Sku2.modules.audioMenu.filterString = ""
+			this.filterString = ""
 		end
 	end
 end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+function this:StartStopBackgroundSound(aStart)
+	print("Sku2.modules.core.audioMenu:StartStopBackgroundSound(aStart)", aStart, SDL3)
+	
+end
+

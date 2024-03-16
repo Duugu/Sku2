@@ -1,9 +1,9 @@
-## Interface: 30403
+## Interface: 40400
 ## Interface-Wrath: 30403
-## Title: Sku2 (0.02)
+## Title: Sku2 (0.03)
 ## SavedVariables: Sku2DB
 ## Dependencies: 
-## Version: 0.02
+## Version: 0.03
 ## X-Curse-Project-ID: 
 
 embeds.xml
@@ -18,15 +18,19 @@ locales\enUS.lua
 locales\deDE.lua
 locales\core.lua
 
-settings\settings.lua
-settings\profile\settings.lua
-settings\profile\navigation\settings.lua
-settings\character\settings.lua
-settings\faction\settings.lua
-
 utility\core.lua
 utility\tableHelpers.lua
 
 modules\core.lua
-modules\keyBindings.lua
-modules\audioMenu.lua
+
+modules\core\core.lua
+modules\core\keyBindings.lua
+modules\core\audioMenu.lua
+modules\core\settings.lua
+modules\core\menu.lua
+
+modules\_sampleModule\core.lua
+modules\_sampleModule\code.lua
+modules\_sampleModule\settings.lua
+modules\_sampleModule\menu.lua
+

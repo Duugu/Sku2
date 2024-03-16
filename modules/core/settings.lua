@@ -1,29 +1,29 @@
---[[
-	SkuCore.Keys.SkuDefaultBindings
-	skuDefaultKeyBindings
-	SkuCore:CheckBound
-]]
-print("modules\\keyBindings.lua loading", SDL3)
+print("modules\\core\\settings.lua loading", SDL3)
 
 local _G = _G
 local L = Sku2.L
 
-Sku2.modules.keyBindings = {}
+local this = Sku2.modules.core
+
+--[[
+   module settings
+]]
+---------------------------------------------------------------------------------------------------------------------------------------
+this.settings = {}
 
 ---------------------------------------------------------------------------------------------------------------------------------------
---locals
-
-
----------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules.keyBindings:OnInitialize()
-	print("Sku2.modules.keyBindings:OnInitialize()", SDL3)
-	
-	
-end
+-- char
+this.settings.char = {
+}
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.modules.keyBindings:OnEnable()
-	print("Sku2.modules.keyBindings:OnEnable()", SDL3)
+-- global
+this.settings.global = {
 
-end
+}
 
+---------------------------------------------------------------------------------------------------------------------------------------
+-- profile
+this.settings.profile = {
+
+}

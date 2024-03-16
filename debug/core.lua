@@ -6,7 +6,7 @@ to do:
    - implment audio output in Sku2.debug.AudioError
    - use Sku2.debug.SetErrorNotifications(aSkuChatNotification, aSkuAudioNotification, aBugsackAudioNotification) on settings loaded/changed
    - use Sku2.debug.ClearErrors
-
+   - handle ACTION_BLOCKED, ACTION_FORBIDDEN events
 
 
 ]]
@@ -17,23 +17,23 @@ local L = Sku2.L
 local originalPrint = getprinthandler()
 local BugGrabber = BugGrabber
 
-Sku2.debug = {}
-Sku2.debug.debugLevel = 3 -- 0 to 3 (0 is nothing)
-Sku2.debug.maxRepeatingErrors = -1 -- -1 for all
-Sku2.debug.bugChatNotification = true
-Sku2.debug.bugAaudioNotification = true
-Sku2.debug.bugAaudioNotificationOnePerSeconds = 5
-Sku2.debug.bugAaudioNotificationLastOutputTime = GetTimePreciseSec() - 100
+Sku2.debug = {
+   debugLevel = 3, -- 0 to 3 (0 is nothing)
+   maxRepeatingErrors = -1, -- -1 for all
+   bugChatNotification = true,
+   bugAaudioNotification = true,
+   bugAaudioNotificationOnePerSeconds = 5,
+   bugAaudioNotificationLastOutputTime = GetTimePreciseSec() - 100,
+}
 
+--[[
+   global debug level constants for easier use with print() (we can't use just numbers for debug level, because print takes
+   an unknown number of arguments and in our hook we do need to check if there is a debug level value)
+]]
 for x = 0, 3 do
    _G["SDL"..x] = "SkuDebugLevel"..x
    _G["sdl"..x] = "SkuDebugLevel"..x
 end
-
-local startTime = GetTimePreciseSec()
-local addonLoaded
-local dbLoading = {}
-local db = {}
 
 ---------------------------------------------------------------------------------------------------------
 function Sku2.debug.Print(...)
@@ -110,6 +110,7 @@ function Sku2.debug.AudioError(aError, aDetailed, aForce)
       end
    end
 end
+
 ---------------------------------------------------------------------------------------------------------
 function Sku2.debug.PrintError(aError, aDetailed, aForce)
    --[[error = {number, session, counter, message, time, locals, stack}]]
@@ -159,6 +160,7 @@ function Sku2.debug.OutputErrors(aNumberOfErrors, aDetailed, aFromStart)
       Sku2.debug.PrintError(errors[x], aDetailed, true)
    end
 end
+
 ---------------------------------------------------------------------------------------------------------
 function Sku2.debug.OutputLastError(aDetailed, aForce)
    if not BugGrabber then
@@ -248,11 +250,5 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 function events:ADDON_ACTION_FORBIDDEN(event, msg)
-   --Sku2.debug.Error(event..": "..msg)
-end
-
----------------------------------------------------------------------------------------------------------
-function events:LUA_WARNING(event, warnType, warningText)
-   --print(event, warnType, warningText)
    --Sku2.debug.Error(event..": "..msg)
 end
