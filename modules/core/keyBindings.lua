@@ -24,14 +24,14 @@ local this = Sku2.modules.core.keyBindings
 ]]
 ---------------------------------------------------------------------------------------------------------------------------------------
 function this:OnInitialize()
-	print("Sku2.modules.core.keyBindings:OnInitialize()", SDL3)
+	print("modules\\core\\keyBindings.lua OnInitialize", SDL3)
 	
 	
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 function this:OnEnable()
-	print("Sku2.modules.core.keyBindings:OnEnable()", SDL3)
+	print("modules\\core\\keyBindings.lua OnEnable()", SDL3)
 
 end
 

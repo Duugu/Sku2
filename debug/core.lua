@@ -21,14 +21,14 @@ Sku2.debug = {
    debugLevel = 3, -- 0 to 3 (0 is nothing)
    maxRepeatingErrors = -1, -- -1 for all
    bugChatNotification = true,
-   bugAaudioNotification = true,
-   bugAaudioNotificationOnePerSeconds = 5,
-   bugAaudioNotificationLastOutputTime = GetTimePreciseSec() - 100,
+   bugAudioNotification = true,
+   bugAudioNotificationOnePerSeconds = 5,
+   bugAudioNotificationLastOutputTime = GetTimePreciseSec() - 100,
 }
 
 --[[
    global debug level constants for easier use with print() (we can't use just numbers for debug level, because print takes
-   an unknown number of arguments and in our hook we do need to check if there is a debug level value)
+   an unknown number of arguments and in our handler we do need to check if there is a debug level value)
 ]]
 for x = 0, 3 do
    _G["SDL"..x] = "SkuDebugLevel"..x
@@ -71,9 +71,127 @@ end
 setprinthandler(Sku2.debug.Print)
 
 ---------------------------------------------------------------------------------------------------------
+function Sku2.debug:Error(aMessage)
+   if not aMessage then
+      return
+   end
+
+   aMessage = "Sku error: "..aMessage
+
+   if _G["BugGrabber"] then
+      local findVersions = nil
+      do
+         local function scanObject(o)
+            local version, revision = nil, nil
+            for k, v in next, o do
+               if type(k) == "string" and (type(v) == "string" or type(v) == "number") then
+                  local low = k:lower()
+                  if not version and low:find("version") then
+                     version = v
+                  elseif not revision and low:find("revision") then
+                     revision = v
+                  end
+               end
+               if version and revision then break end
+            end
+            return version, revision
+         end
+      
+         local matchCache = setmetatable({}, { __index = function(self, object)
+            if type(object) ~= "string" or #object < 3 then return end
+            local found = nil
+            -- First see if it's a library
+            if LibStub then
+               local _, minor = LibStub(object, true)
+               found = minor
+            end
+            -- Then see if we can get some addon metadata
+            if not found and IsAddOnLoaded(object) then
+               found = GetAddOnMetadata(object, "X-Curse-Packaged-Version")
+               if not found then
+                  found = GetAddOnMetadata(object, "Version")
+               end
+            end
+            -- Perhaps it's a global object?
+            if not found then
+               local o = _G[object] or _G[object:upper()]
+               if type(o) == "table" then
+                  local v, r = scanObject(o)
+                  if v or r then
+                     found = tostring(v) .. "." .. tostring(r)
+                  end
+               elseif o then
+                  found = o
+               end
+            end
+            if not found then
+               found = _G[object:upper() .. "_VERSION"]
+            end
+            if type(found) == "string" or type(found) == "number" then
+               self[object] = found
+               return found
+            end
+         end })
+      
+         local tmp = {}
+         local function replacer(start, object, tail)
+            -- Have we matched this object before on the same line?
+            -- (another pattern could re-match a previous match...)
+            if tmp[object] then return end
+            local found = matchCache[object]
+            if found then
+               tmp[object] = true
+               return (type(start) == "string" and start or "") .. object .. "-" .. found .. (type(tail) == "string" and tail or "")
+            end
+         end
+      
+         local matchers = {
+            "(\\)([^\\]+)(%.lua)",       -- \Anything-except-backslashes.lua
+            "^()([^\\]+)(\\)",           -- Start-of-the-line-until-first-backslash\
+            "()(%a+%-%d%.?%d?)()",       -- Anything-#.#, where .# is optional
+            "()(Lib%u%a+%-?%d?%.?%d?)()" -- LibXanything-#.#, where X is any capital letter and -#.# is optional
+         }
+         function findVersions(line)
+            if not line or line:find("FrameXML\\") then return line end
+            for i = 1, 4 do
+               line = line:gsub(matchers[i], replacer)
+            end
+            wipe(tmp)
+            return line
+         end
+      end
+
+      -- Scan for version numbers in the stack
+      local tmp = {}
+      local stack = debugstack(2)
+
+      -- Scan for version numbers in the stack
+      for line in stack:gmatch("(.-)\n") do
+         tmp[#tmp+1] = findVersions(line)
+      end
+      local inCombat = IsEncounterInProgress() -- debuglocals can be slow sometimes (200ms+)
+      local errorObject = {
+         message = aMessage,
+         stack = table.concat(tmp, "\n"),
+         locals = inCombat and "Skipped (In Encounter)" or debuglocals(2),
+         session = _G["BugGrabber"]:GetSessionId(),
+         time = date("%Y/%m/%d %H:%M:%S"),
+         counter = 1,
+      }
+
+
+      _G["BugGrabber"]:StoreError(errorObject)
+   end
+
+   if Sku2.addonLoaded then
+      Sku2.debug.OutputLastError()
+   end
+end
+
+---------------------------------------------------------------------------------------------------------
 function Sku2.debug.SetErrorNotifications(aSkuChatNotification, aSkuAudioNotification, aBugsackAudioNotification)
    if aBugsackAudioNotification then
-      if aBugsackAudioNotification == false and _G["BugSack"] then
+      if aBugsackAudioNotification == true and _G["BugSack"] then
          _G["BugSack"].db.mute = nil
       elseif aBugsackAudioNotification == false and _G["BugSack"] then
          _G["BugSack"].db.mute = true
@@ -82,8 +200,8 @@ function Sku2.debug.SetErrorNotifications(aSkuChatNotification, aSkuAudioNotific
    if aSkuChatNotification then
       Sku2.debug.bugChatNotification = aSkuChatNotification
    end
-   if aSkuChatNotification then
-      Sku2.debug.bugChatNotification = aSkuAudioNotification
+   if aSkuAudioNotification then
+      Sku2.debug.bugAudioNotification = aSkuAudioNotification
    end
 end
 
@@ -97,11 +215,11 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 function Sku2.debug.AudioError(aError, aDetailed, aForce)
-   if Sku2.debug.bugAaudioNotification ~= true then
+   if Sku2.debug.bugAudioNotification ~= true then
       return
    end
-   if GetTimePreciseSec() - Sku2.debug.bugAaudioNotificationLastOutputTime > Sku2.debug.bugAaudioNotificationOnePerSeconds then
-      Sku2.debug.bugAaudioNotificationLastOutputTime = GetTimePreciseSec()
+   if GetTimePreciseSec() - Sku2.debug.bugAudioNotificationLastOutputTime > Sku2.debug.bugAudioNotificationOnePerSeconds then
+      Sku2.debug.bugAudioNotificationLastOutputTime = GetTimePreciseSec()
       if aError.counter < 2 then
          print("<insert bug audio notification here>")
 
@@ -235,20 +353,20 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 function events:MACRO_ACTION_BLOCKED(event, msg)   
-   --Sku2.debug.Error(event..": "..msg)
+   --Sku2.debug:Error(event..": "..msg)
 end
 
 ---------------------------------------------------------------------------------------------------------
 function events:ADDON_ACTION_BLOCKED(event, msg)
-   --Sku2.debug.Error(event..": "..msg)
+   --Sku2.debug:Error(event..": "..msg)
 end
 
 ---------------------------------------------------------------------------------------------------------
 function events:MACRO_ACTION_FORBIDDEN(event, msg)
-   --Sku2.debug.Error(event..": "..msg)
+   --Sku2.debug:Error(event..": "..msg)
 end
 
 ---------------------------------------------------------------------------------------------------------
 function events:ADDON_ACTION_FORBIDDEN(event, msg)
-   --Sku2.debug.Error(event..": "..msg)
+   --Sku2.debug:Error(event..": "..msg)
 end

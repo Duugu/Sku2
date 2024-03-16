@@ -1,18 +1,18 @@
 ## Interface: 40400
-## Interface-Wrath: 30403
-## Title: Sku2 (0.03)
+## Interface-Wrath: 30404
+## Title: Sku2
 ## SavedVariables: Sku2DB
 ## Dependencies: 
-## Version: 0.03
+## Version: 0.04
 ## X-Curse-Project-ID: 
 
 embeds.xml
 
+dispatcher\core.lua
+
 core.lua
 
 debug\core.lua
-
-dispatcher\core.lua
 
 locales\enUS.lua
 locales\deDE.lua

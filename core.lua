@@ -1,10 +1,22 @@
 Sku2 = LibStub("AceAddon-3.0"):NewAddon("Sku2")
+Sku2.addonLoaded = nil
+SkuDispatcher:RegisterEventCallback("ADDON_LOADED", function()
+   Sku2.addonLoaded = true
+end, true)
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- core
 function Sku2:OnInitialize()
-   print("Sku2:OnInitialize()", SDL3)
+   print("core.lua OnInitialize", SDL3)
    Sku2.clientFlavorString = Sku2.utility:GetClientFlavorString()
+   if not Sku2.clientFlavorString then
+      Sku2.debug:Error("Sku2 not initialized")
+      return
+   end
+
+   -- register events
+   SkuDispatcher:RegisterEventCallback("ADDON_LOADED", Sku2.ADDON_LOADED)
+   SkuDispatcher:RegisterEventCallback("PLAYER_ENTERING_WORLD", Sku2.PLAYER_ENTERING_WORLD)
 
    --create defaults and settings
 
@@ -61,9 +73,35 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 function Sku2:OnEnable()
-   print("Sku2:OnEnable()", SDL3)
+   print("core.lua OnEnable", SDL3)
    -- Do more initialization here, that really enables the use of your addon. Register Events, Hook functions, Create Frames, Get information from the game that wasn't available in OnInitialize
+   if not Sku2.clientFlavorString then
+      Sku2.debug:Error("Sku2.clientFlavorString nil; OnEnable return")
+      return
+   end
+
 
    --enable all modules
    Sku2.modules:OnEnable()
+end
+
+--[[
+   event handlers
+]]
+---------------------------------------------------------------------------------------------------------------------------------------
+function Sku2:ADDON_LOADED(aEvent, aAddonName)
+   if aAddonName == "Sku2" then
+      print(aEvent, SDL3)
+
+
+   end
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+function Sku2:PLAYER_ENTERING_WORLD(aEvent, aIsInitialLogin, aIsReloadingUi)
+   print(aEvent, aIsInitialLogin, aIsReloadingUi, SDL3)
+   print("Version", GetAddOnMetadata("Sku2", "Version"), SDL3)
+   print("Flavor", Sku2.clientFlavorString, SDL3)
+   
+
 end
