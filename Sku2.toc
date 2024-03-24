@@ -3,12 +3,14 @@
 ## Title: Sku2
 ## SavedVariables: Sku2DB
 ## Dependencies: 
-## Version: 0.05
+## Version: 0.06
 ## X-Curse-Project-ID: 
 
 embeds.xml
 
 init.lua
+
+debug\core.lua
 
 locales\enUS.lua
 locales\deDE.lua
@@ -16,24 +18,43 @@ locales\core.lua
 
 dispatcher\core.lua
 
-debug\core.lua
-
 utility\core.lua
 utility\tableHelpers.lua
 
-
 modules\init.lua
+
+modules\keyBindings\core.lua
+modules\keyBindings\code.lua
+modules\keyBindings\settings.lua
+modules\keyBindings\menu.lua
 
 modules\audioMenu\core.lua
 modules\audioMenu\code.lua
 modules\audioMenu\settings.lua
 modules\audioMenu\menu.lua
 
+modules\addon\core.lua
+modules\addon\code.lua
+modules\addon\settings.lua
+modules\addon\menu.lua
+
+modules\characterFrame\core.lua
+modules\characterFrame\code.lua
+modules\characterFrame\settings.lua
+modules\characterFrame\menu.lua
+
+modules\bags\core.lua
+modules\bags\code.lua
+modules\bags\settings.lua
+modules\bags\menu.lua
+
 modules\_sampleModule\core.lua
 modules\_sampleModule\code.lua
 modules\_sampleModule\settings.lua
 modules\_sampleModule\menu.lua
 
-modules\core.lua
+modules\moduleLoader.lua
 
 core.lua
+
+testing.lua

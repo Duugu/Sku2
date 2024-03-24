@@ -1,14 +1,16 @@
 print("modules\\audioMenu\\menu.lua loading", SDL3)
-
-local _G = _G
+local moduleName = "audioMenu"
 local L = Sku2.L
 
-local moduleName = "audioMenu"
 Sku2.modules[moduleName]._prototypes = Sku2.modules[moduleName]._prototypes or {}
 Sku2.modules[moduleName]._prototypes.UI = {}
 local prototype = Sku2.modules[moduleName]._prototypes.UI
-local this = Sku2.modules[moduleName]
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- module UI
 ---------------------------------------------------------------------------------------------------------------------------------------
+--upvalue to reference the final module inside the function definitions
+local module = Sku2.modules[moduleName]
+
+---------------------------------------------------------------------------------------------------------------------------------------
+

@@ -1,28 +1,37 @@
-print("modules\\audioMenu\\settings.lua loading", SDL3)
-local moduleName = "audioMenu"
+print("modules\\keyBindings\\code.lua loading", SDL3)
+local moduleName = "keyBindings"
 local L = Sku2.L
 
 Sku2.modules[moduleName]._prototypes = Sku2.modules[moduleName]._prototypes or {}
-Sku2.modules[moduleName]._prototypes.settings = {}
-local prototype = Sku2.modules[moduleName]._prototypes.settings
+Sku2.modules[moduleName]._prototypes.code = {}
+local prototype = Sku2.modules[moduleName]._prototypes.code
+setmetatable(prototype, Sku2.modules.MTs.__newindex)
 
 ---------------------------------------------------------------------------------------------------------------------------------------
--- module settings
+--prototype definition
 ---------------------------------------------------------------------------------------------------------------------------------------
 --upvalue to reference the final module inside the function definitions
 local module = Sku2.modules[moduleName]
 
 ---------------------------------------------------------------------------------------------------------------------------------------
--- char
-prototype.char = {
+--[[
+prototype.testtable = {
+	"default"
 }
+]]
 
 ---------------------------------------------------------------------------------------------------------------------------------------
--- global
-prototype.global = {
-}
+--every module should have a SetUpModule function that is called on modules OnInitilize
+function prototype:SetUpModule()
+	print(moduleName, "SetUpModule", self)
+
+end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
--- profile
-prototype.profile = {
-}
+function prototype:GetCurrentSkuBindings()
+	local tSkuBindings = {}
+	for skuKeyBindName, binding in pairs(Sku2.db.global.keyBindings.skuKeyBinds) do
+		tSkuBindings[skuKeyBindName] = binding
+	end
+	return tSkuBindings
+end

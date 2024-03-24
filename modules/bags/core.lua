@@ -1,5 +1,5 @@
-print("modules\\audioMenu\\core.lua loading", SDL3)
-local moduleName = "audioMenu"
+print("modules\\bags\\core.lua loading", SDL3)
+local moduleName = "bags"
 local L = Sku2.L
 
 Sku2.modules[moduleName] = Sku2.modules[moduleName] or Sku2.modules:NewModule(moduleName)
@@ -13,11 +13,11 @@ local module = Sku2.modules[moduleName]
 ---------------------------------------------------------------------------------------------------------------------------------------
 module.name = moduleName
 module.isSkuModule = true
-module.canBeDisabled = false
+module.canBeDisabled = true
 module.dependencies = {
 	"audioMenu",
 }
-module.globalKeybinds = {
+module.globalKeybinds = { --["SOME SKU KEY CONST"] = some frame,
 }
 
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -25,6 +25,7 @@ module.globalKeybinds = {
 ---------------------------------------------------------------------------------------------------------------------------------------
 function module:OnInitialize()
 	print(moduleName, "OnInitialize", SDL3)
+	
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -36,7 +37,7 @@ function module:OnEnable()
 	end	
 
 	module:SetUpModule()
-
+	
 	--set all global key binds for module
 	for skuKeyBindName, frame in pairs(module.globalKeybinds) do
 		SetOverrideBindingClick(frame, true, Sku2.db.global.keyBindings.skuKeyBinds[skuKeyBindName], frame:GetName(), Sku2.db.global.keyBindings.skuKeyBinds[skuKeyBindName])
@@ -55,4 +56,5 @@ function module:OnDisable()
 	for skuKeyBindName, frame in pairs(module.globalKeybinds) do
 		ClearOverrideBindings(frame)
 	end
+
 end

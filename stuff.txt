@@ -1,0 +1,47 @@
+TO DO
+   Basic stuff to be implemented before addon features
+      - build sample modules for bags and questaccept to test approach for securely handeling them
+
+      - keybinds
+         - add secure handlers for bind/unbind keys to modules; execute them OnDisable/OnEnable
+      - disable/enable modules
+         - module dependencies
+         - add handler for OnDisable events to modules
+      - add dual spec values to char settings and add handlers for them
+      - add localized tooltip value to all settings (incl. setting type (char, faction, profile...))
+      - add visual menu debug frame
+      - test menu performance
+      - add tooltips
+         - menu & non-menu
+      - add menu shortcuts (performance?, secure menus?)
+      - again test menu performance (keep shortcuts in mind)
+      - manually build the settings parts to final menu structure
+         - what should happen with disabled modules settings?
+         - should settings value from disabled modules still be saved to WTF?
+      - generic UI handlers to be used for setting types w/o custom menus
+      - manually build the UI parts to final structure
+         - what should happen with disabled UI parts settings?
+      - add module to build Current Panels?
+         - modules for specifc panels
+         - generic for panels w/o module
+      - setup the menu with settings and UI final structure
+         <xx>
+         <...>
+         <yy>
+         Current Panels
+         Settings
+      - profile management
+      - loading flavor specific DBs
+         - parsing string DBs
+         - workflow for DB updates, considering existing route data
+      - new route data structure (load times, sizes, to many tokens)
+        - per map?
+
+   Modules to implement before more general modules
+      - sounds repo
+      - async voice outputs (audiodata)
+         - should be able to easily switch to blizzard tts if they are adding async at some point
+      - beacons
+      
+
+

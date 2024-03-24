@@ -4,11 +4,19 @@ local L = Sku2.L
 Sku2.utility.tableHelpers = {}
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function Sku2.utility.tableHelpers:AddTableToSecureHandlerBody(aNewTableName, aNewTableValues, aExistingBody)
-	local tChars = {"a", "b", "c"}
+function Sku2.utility.tableHelpers:AddStringIndexTableToSecureHandlerBody(aNewTableName, aNewTableValues, aExistingBody)
 	local tBody = "local "..aNewTableName.." = table.new() "
 	for i, v in pairs(aNewTableValues) do
-		tBody = tBody.."table.insert("..aNewTableName..", '"..v.."')"
+		tBody = tBody..aNewTableName.."['"..tostring(i).."'] = '"..tostring(v).."' "
+	end
+	return tBody.." "..aExistingBody
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+function Sku2.utility.tableHelpers:AddNumberIndexTableToSecureHandlerBody(aNewTableName, aNewTableValues, aExistingBody)
+	local tBody = "local "..aNewTableName.." = table.new() "
+	for i, v in pairs(aNewTableValues) do
+		tBody = tBody.."table.insert("..tostring(aNewTableName)..", '"..tostring(v).."')"
 	end
 	return tBody.." "..aExistingBody
 end

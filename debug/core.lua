@@ -8,15 +8,11 @@ to do:
    - use Sku2.debug.ClearErrors
    - handle ACTION_BLOCKED, ACTION_FORBIDDEN events
 ]]
-print("debug\\core1.lua loading", SDL3)
-
-local L = Sku2.L
-
 local originalPrint = getprinthandler()
 local BugGrabber = BugGrabber
 
 Sku2.debug = {
-   debugLevel = 3, -- 0 to 3 (0 is nothing)
+   debugLevel = 2, -- 0 to 3 (0 is nothing)
    maxRepeatingErrors = -1, -- -1 for all
    bugChatNotification = true,
    bugAudioNotification = true,
@@ -34,9 +30,6 @@ for x = 0, 3 do
 end
 
 local addonLoaded = nil
-SkuDispatcher:RegisterEventCallback("ADDON_LOADED", function()
-   addonLoaded = true
-end, true)
 
 ---------------------------------------------------------------------------------------------------------
 function Sku2.debug.Print(...)
@@ -338,6 +331,8 @@ end
 ---------------------------------------------------------------------------------------------------------
 function events:ADDON_LOADED(event, msg)
    if msg == "Sku2" then
+      addonLoaded = true
+
       if BugGrabber then
          local tSessionId = BugGrabber:GetSessionId()
          if tSessionId then
@@ -375,3 +370,5 @@ function events:ADDON_ACTION_FORBIDDEN(event, msg)
    --Sku2.debug:Error(event..": "..msg)
 end
 ]]
+
+print("debug\\core1.lua loaded", SDL3)
