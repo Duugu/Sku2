@@ -1,29 +1,36 @@
-print("modules\\characterFrame\\code.lua loading", SDL3)
-local moduleName = "characterFrame"
+print("modules\\openPanels\\settings.lua loading", SDL3)
+local moduleName = "openPanels"
 local L = Sku2.L
 
 Sku2.modules[moduleName]._prototypes = Sku2.modules[moduleName]._prototypes or {}
-Sku2.modules[moduleName]._prototypes.code = {}
-local prototype = Sku2.modules[moduleName]._prototypes.code
-setmetatable(prototype, Sku2.modules.MTs.__newindex)
+Sku2.modules[moduleName]._prototypes.settings = {}
+local prototype = Sku2.modules[moduleName]._prototypes.settings
 
 ---------------------------------------------------------------------------------------------------------------------------------------
---prototype definition
+-- module settings
 ---------------------------------------------------------------------------------------------------------------------------------------
+--upvalue to reference the final module inside the function definitions
 local module = Sku2.modules[moduleName]
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function prototype:SetUpModule()
-	print(moduleName, "SetUpModule", self)
-	Sku2.modules.openPanels:RegisterModule(module, module.uiStruct.characterFrameMain, module.IsPanelOpen)
-end
+-- char
+prototype.char = {
+	enabled = {
+		flavors = {"classic", "era", "sod", "retail"},
+		order = 1,
+		title = "Sku2.modules.openPanels > char > enabled title",
+		desc = "Sku2.modules.openPanels > char > enabled desc",
+		type = "toggle",
+		defaultValue = {
+			default = true,
+		},
+	},
+}
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-function prototype:IsPanelOpen()
-	print(moduleName, "IsPanelOpen", self)
-	if _G["CharacterFrame"]:IsVisible() then
-		return true
-	end
-end
+-- global
+prototype.global = {}
 
 ---------------------------------------------------------------------------------------------------------------------------------------
+-- profile
+prototype.profile = {}

@@ -46,6 +46,7 @@ function prototype:TranscriptPanelOutput(aString)
 	
 	module.TranscriptPanelFrame.FS:SetText(aString)
 	module.TranscriptPanelFrame:Show()
+	module.TranscriptPanelFrame.lastUpdate = GetTime()
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------

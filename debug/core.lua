@@ -12,7 +12,7 @@ local originalPrint = getprinthandler()
 local BugGrabber = BugGrabber
 
 Sku2.debug = {
-   debugLevel = 2, -- 0 to 3 (0 is nothing)
+   debugLevel = 3, -- 0 to 3 (0 is nothing)
    maxRepeatingErrors = -1, -- -1 for all
    bugChatNotification = true,
    bugAudioNotification = true,

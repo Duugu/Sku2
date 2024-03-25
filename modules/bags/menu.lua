@@ -28,8 +28,8 @@ prototype.bagsMenu = {
 						for y = 1, 28 do
 							local tNewMenuEntry = Sku2.modules.audioMenu:InjectMenuItems(self, {"slot "..y}, Sku2.modules.audioMenu.genericMenuItem)
 							tNewMenuEntry.filteringAllowed = false
-							tNewMenuEntry.onEnterFunc = function(self)
-								print("slot "..y.."  onEnterFunc")
+							tNewMenuEntry.onEnterCallbackFunc = function(self)
+								print("slot "..y.."  onEnterCallbackFunc")
 							end
 							tNewMenuEntry.actionFunc = function(self)
 								print("bag "..x, "slot "..y, "actionFunc", self.name)

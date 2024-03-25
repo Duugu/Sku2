@@ -34,3 +34,33 @@ function Sku2.utility:GetClientFlavorString()
 
    return tClientString
 end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+local escapes = {
+	["|c%x%x%x%x%x%x%x%x"] = "", -- color start
+	["|r"] = "", -- color end
+	["|H.-|h(.-)|h"] = "%1", -- links
+	["|T.-|t"] = "", -- textures
+	["|A.-|a"] = "", -- textures
+	["{.-}"] = "", -- raid target icons
+}
+local escapesChat = {
+	["|c%x%x%x%x%x%x%x%x"] = "", -- color start
+	["|r"] = "", -- color end
+	["|H.-|h(.-)|h"] = "%1", -- links
+	["|T.-|t"] = "", -- textures
+	--["{.-}"] = "", -- raid target icons
+}
+function Sku2.utility:Unescape(str, aChatSpecific)
+	if not str then return nil end
+
+	local tEscapeStrings = escapes
+	if aChatSpecific then
+		tEscapeStrings = escapesChat
+	end
+	
+	for k, v in pairs(tEscapeStrings) do
+		str = string.gsub(str, k, v)
+	end
+	return str
+end

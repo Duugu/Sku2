@@ -13,4 +13,60 @@ local prototype = Sku2.modules[moduleName]._prototypes.UI
 local module = Sku2.modules[moduleName]
 
 ---------------------------------------------------------------------------------------------------------------------------------------
+prototype.defaultItemButtonSubmenu = {
+	flavors = {"classic", "era", "sod", "retail"},
+	title = "defaultItemButtonSubmenu",
+	desc = "defaultItemButtonSubmenu desc",
+   inCombatAvailable = false,
+	menuBuilder = {
+		default = function(self)
+			print("create defaultItemButtonSubmenu default")
+         local audioMenu = Sku2.modules.audioMenu
 
+         --left click
+         local tNewMenuEntry = audioMenu:InjectMenuItems(self, {"Left Click"}, audioMenu.genericMenuItem)
+         tNewMenuEntry.inCombatAvailable = false
+         tNewMenuEntry.onEnterCallbackFunc = function(self)
+            Sku2.modules.audioMenu:SetOutOfCombatActionButton(self.parent.clickFrame, "LeftButton", self)
+         end            
+         tNewMenuEntry.onLeaveCallbackFunc = function(self)
+            Sku2.modules.audioMenu:ClearOutOfCombatActionButton()
+         end            
+         tNewMenuEntry.actionFunc = function(self)
+            print("actionFunc", self.name)
+            self.parent:Update()
+         end
+
+         --right click
+         local tNewMenuEntry = audioMenu:InjectMenuItems(self, {"Right Click"}, audioMenu.genericMenuItem)
+         tNewMenuEntry.inCombatAvailable = false
+         tNewMenuEntry.onEnterCallbackFunc = function(self)
+            Sku2.modules.audioMenu:SetOutOfCombatActionButton(self.parent.clickFrame, "RightButton", self)
+         end            
+         tNewMenuEntry.onLeaveCallbackFunc = function(self)
+            Sku2.modules.audioMenu:ClearOutOfCombatActionButton()
+         end            
+         tNewMenuEntry.actionFunc = function(self)
+            print("actionFunc", self.name)
+            self.parent:Update()
+         end
+
+         --socketing
+
+
+
+         --add link to chat
+
+
+
+         --flag for auto sell
+
+
+
+         --destroy
+
+
+
+		end,
+	},
+}
