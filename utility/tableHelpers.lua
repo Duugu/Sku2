@@ -40,3 +40,21 @@ function Sku2.utility.tableHelpers:TableCopy(t, deep, seen)
 	seen[t] = nt
 	return nt
 end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+function Sku2.utility.tableHelpers:SkuSpairs(t, order)
+	local keys = {}
+	for k in pairs(t) do keys[#keys+1] = k end
+	if order then
+		table.sort(keys, function(a,b) return order(t, a, b) end)
+	else
+		table.sort(keys)
+	end
+	local i = 0
+	return function()
+		i = i + 1
+		if keys[i] then
+			return keys[i], t[keys[i]]
+		end
+	end
+end

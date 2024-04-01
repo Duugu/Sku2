@@ -1,5 +1,5 @@
-print("modules\\bags\\settings.lua loading", SDL3)
-local moduleName = "bags"
+print("modules\\auras\\settings.lua loading", SDL3)
+local moduleName = "auras"
 local L = Sku2.L
 
 Sku2.modules[moduleName]._prototypes = Sku2.modules[moduleName]._prototypes or {}
@@ -17,13 +17,29 @@ prototype.char = {
 	enabled = {
 		flavors = {"classic", "era", "sod", "retail"},
 		order = 1,
-		title = "Sku2.modules.bags > char > enabled title",
-		desc = "Sku2.modules.bags > char > enabled desc",
+		title = "Sku2.modules.auras > char > enabled title",
+		desc = "Sku2.modules.auras > char > enabled desc",
 		type = "toggle",
 		defaultValue = {
-			default = "defaultValue default for Sku2.modules.bags > char > enabled",
+			default = true,
+		},
+		menuBuilder = {
+			default = function(aParent)
+
+			end,
 		},
 	},
+	Auras = {
+		flavors = {"classic", "era", "sod", "retail"},
+		order = 2,
+		title = "Sku2.modules.auras > char > Auras title",
+		desc = "Sku2.modules.auras > char > Auras desc",
+		type = "table",
+		defaultValue = {
+			default = {},
+		},
+		menuBuilder = false,
+	},	
 }
 
 ---------------------------------------------------------------------------------------------------------------------------------------

@@ -10,23 +10,24 @@ setmetatable(prototype, Sku2.modules.MTs.__newindex)
 ---------------------------------------------------------------------------------------------------------------------------------------
 --prototype definition
 ---------------------------------------------------------------------------------------------------------------------------------------
---upvalue to reference the final module inside the function definitions
 local module = Sku2.modules[moduleName]
 
 ---------------------------------------------------------------------------------------------------------------------------------------
+--module event handlers
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+--module members
+---------------------------------------------------------------------------------------------------------------------------------------
 function prototype:SetUpModule()
-	print(moduleName, "SetUpModule", self)
+	print(moduleName, "SetUpModule", self, SDL3)
 	module:CreateMenuTemplate()
 	module:CreateOutOfCombatActionButton()
 	module:SetUpMenu()
 	module:UpdateMenuSettings()
 end
-
----------------------------------------------------------------------------------------------------------------------------------------
---event handlers
----------------------------------------------------------------------------------------------------------------------------------------
-
-
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 function prototype:CreateOutOfCombatActionButton()
@@ -36,8 +37,7 @@ function prototype:CreateOutOfCombatActionButton()
 	tAudioMenuSecureActionFrame:SetAttribute("macrotext", "")
 	tAudioMenuSecureActionFrame.InsecureClickHandler = function() end
 	SecureHandlerWrapScript(tAudioMenuSecureActionFrame, "OnClick", tAudioMenuSecureActionFrame, [=[
-		print("wrap click")
-		print(self, self:GetName())
+		print("tAudioMenuSecureActionFrame OnClick wrapper")
 		self:CallMethod("InsecureClickHandler", button, down)
 	]=])
 	SkuDispatcher:RegisterEventCallback("PLAYER_REGEN_DISABLED", module.ClearOutOfCombatActionButton)
@@ -47,10 +47,10 @@ end
 function prototype:SetOutOfCombatActionButton(aButtonFrame, aMouseButton, aMenuItem)
 	if InCombatLockdown() ~= true then
 		if aMouseButton and aMouseButton ~= "" and aButtonFrame and aButtonFrame.GetName and aButtonFrame:GetName() then
-			_G["Sku2ModulesAudioMenuSecureActionFrame"]:SetAttribute("macrotext", "/click "..aButtonFrame:GetName().." "..aMouseButton)
+			_G["Sku2ModulesAudioMenuSecureActionFrame"]:SetAttribute("macrotext", "/click "..aButtonFrame:GetName().." "..aMouseButton.."\r/script print('action click')")
 			SetOverrideBindingClick(_G["Sku2ModulesAudioMenuSecureActionFrame"], true, Sku2.db.global.keyBindings.skuKeyBinds["SKU_KEY_MENUITEMEXECUTE"], _G["Sku2ModulesAudioMenuSecureActionFrame"]:GetName())--Sku2.db.global.keyBindings.skuKeyBinds["SKU_KEY_MENUITEMEXECUTE"])
 			if aMenuItem and aMenuItem.actionFunc then
-				_G["Sku2ModulesAudioMenuSecureActionFrame"].InsecureClickHandler = function() aMenuItem.actionFunc(aMenuItem) end
+				_G["Sku2ModulesAudioMenuSecureActionFrame"].InsecureClickHandler = function() aMenuItem.Action(aMenuItem) end
 			end
 		else
 			module:ClearOutOfCombatActionButton()
@@ -92,6 +92,7 @@ function prototype:CreateMenuTemplate()
 		actionFunc = nil,
 		onEnterCallbackFunc = nil,
 		onLeaveCallbackFunc = nil,
+		onBackCallbackFunc = nil,
 		--isSelect = false,
 		--selectTarget = nil,
 		inCombatAvailable = true,
@@ -99,39 +100,117 @@ function prototype:CreateMenuTemplate()
 		--filteringAllowed = true, --module value is to avoid the user is filering in in fixed secure in combat menus
 
 		--function handlers
-		Update = function(self, aNewName)
-			C_Timer.After(0.001, function()
-				self.name = aNewName or self.name
-				self:OnUpdate()
-				self:OnEnter()
-			end)
+		BuildChildren = function(self, aForceIndex)
+			if self.buildChildrenFunc then
+				self:buildChildrenFunc()
+				if #self.children == 0 then
+					module:InjectMenuItems(self, {"empty"}, module.genericMenuItem)
+				end
+				self:OnBuildChildren()
+			end
+		end,
+		Update = function(self, aForceIndex)
+			print("-------updating:", self.name, self.parent, SDL3)
+			local tNewChild
 
+			if self.parent.buildChildrenFunc then
+				--buidl a index path and name path table to find the current menu item after the update
+				local tIndexPath, tNamePath = {[1] = module.currentMenuPosition.index}, {[1] = module.currentMenuPosition.name}
+				local tCurrentParent = module.currentMenuPosition.parent
+				while tCurrentParent.name ~= self.name do
+					tIndexPath[#tIndexPath + 1] = tCurrentParent.index
+					tNamePath[#tNamePath + 1] = tCurrentParent.name
+					tCurrentParent = tCurrentParent.parent
+				end
+				tIndexPath[#tIndexPath + 1] = tCurrentParent.index
+				tNamePath[#tNamePath + 1] = tCurrentParent.name
 
+				--save current menu item
+				local tCurrentIndex, tCurrentName, tCurrentFilterString = self.index, self.name, module.filterString
 
-			--fix: is not working on left click and left
-			--add update for full path and back to current
+				--remove filters
+				module.filterString = ""
+				module:ApplyFilter()
 
+				--now iterate all child menu items from the item to update the children and to find the current item again
+				self.parent.children = {}
+				self.parent:BuildChildren()
+				local tCurrentFind = #tNamePath
+				local tCurrentChild = self.parent.children
+				while tCurrentFind > 0 and not tFound do
+					local tFoundSomething = false
+					for x = 1, #tCurrentChild do
+						if tCurrentChild[x].name == tNamePath[tCurrentFind] then
+							tNewChild = tCurrentChild[x]
+							tCurrentChild[x]:OnEnter()
+							if tCurrentChild[x].buildChildrenFunc then
+								tCurrentChild[x].children = {}
+								tCurrentChild[x]:BuildChildren()
+								tCurrentChild = tCurrentChild[x].children
+								tFoundSomething = true
+							end
+							tCurrentFind = tCurrentFind - 1
+							break
+						end
+					end
+					if tFoundSomething == false then
+						--if we don't find the current item by name at any point in the path, then use the index if aForceIndex was passed to Update()
+						if aForceIndex == true and tCurrentChild[tIndexPath[tCurrentFind]] then
+							tNewChild = tCurrentChild[tIndexPath[tCurrentFind]]
+							tCurrentChild[tIndexPath[tCurrentFind]]:OnEnter()
+							if tCurrentChild[tIndexPath[tCurrentFind]].buildChildrenFunc then
+								tCurrentChild[tIndexPath[tCurrentFind]].children = {}
+								tCurrentChild[tIndexPath[tCurrentFind]]:BuildChildren()
+								tCurrentChild = tCurrentChild[tIndexPath[tCurrentFind]].children
+								tFoundSomething = true
+							end
+							tCurrentFind = tCurrentFind - 1
+						else
+							break
+						end
+					end
+				end
+				
+				--now let's do the same with the last child in the path
+				local tFoundSomething = false
+				for x = 1, #tCurrentChild do
+					if tCurrentChild[x].name == tNamePath[1] then
+						tCurrentChild[x]:OnEnter()
+						tNewChild = tCurrentChild[x]
+						tFoundSomething = true
+						break
+					end
+				end
+				if tCurrentFind == 1 and tFoundSomething == false then
+					--again, if we don't find the current item by name then use the index if aForceIndex was passed to Update()
+					if tCurrentChild[tIndexPath[1]] then
+						tCurrentChild[tIndexPath[1]]:OnEnter()
+						tNewChild = tCurrentChild[tIndexPath[1]]
+						tFoundSomething = true
+					else
+						tCurrentChild[1]:OnEnter()
+					end
+				end
+			end
 
+			--trigger on update
+			self:OnUpdate()
 
+			--if the child path was broken at any point we will return child 1 of the last found children table
+			if not tNewChild then
+				self.parent.children[1]:OnEnter()
+				tNewChild = self.parent.children[1]
+			end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+			--return the new child to be used by the Update() caller
+			return tNewChild
 		end,
 		Action = function(self)
+			print("template generic Action")
 			if self.actionFunc then
-				self:actionFunc()
-				self:OnAction()
+				C_Timer.After(0, function()
+					self:actionFunc()
+				end)
 			end
 		end,
 		Prev = function(self, aToNonEmpty)
@@ -189,8 +268,7 @@ function prototype:CreateMenuTemplate()
 			if string.find(self.name, L["Filter"]..";") == nil then
 				if self.buildChildrenFunc then
 					self.children = {}
-					self:buildChildrenFunc()
-					self:OnBuildChildren()
+					self:BuildChildren()
 					if self.children and self.children[1] then
 						if InCombatLockdown() == true and self.children[1].inCombatAvailable ~= false then
 							Sku2.debug:Error("Generic Right: menu item not available ic: "..self.children[1].name)
@@ -209,6 +287,9 @@ function prototype:CreateMenuTemplate()
 		Back = function(self)
 			if self.parent and self.parent.name and self.parent.name ~= "root" then
 				if self.toParentAllowed ~= false then
+					if self.onBackCallbackFunc then
+						self:onBackCallbackFunc()
+					end
 					self:OnLeave()
 					self.parent:OnEnter()
 				end
@@ -222,13 +303,12 @@ function prototype:CreateMenuTemplate()
 					module.currentMenuPosition:OnLeave()
 					self.parent.children[x]:OnEnter()
 					if self.parent.children[x].buildChildrenFunc then
-						self.parent.children[x]:buildChildrenFunc()
+						self.parent.children[x]:BuildChildren()
 					end
 					return
 				end		
 			end
 		end,
-
 
 		----event handlers
 		OnKey = function(self, aKey)
@@ -269,6 +349,9 @@ function prototype:CreateMenuTemplate()
 			if self.onEnterCallbackFunc then
 				self:onEnterCallbackFunc()
 			end
+			local currentMenuBreadcrumbString = Sku2.modules.audioMenu:GetCurrentBreadcrumbAsName(" > ", true)
+			Sku2.modules.addon:TranscriptPanelOutput(currentMenuBreadcrumbString)
+			PlaySound(811)			
 		end,
 		OnBuildChildren = function(self)
 			
@@ -276,10 +359,13 @@ function prototype:CreateMenuTemplate()
 		OnUpdate = function(self)
 			
 		end,
+		--[[
 		OnAction = function(self)
-			
+			print("template generic OnAction")
 		end,
+		]]
 	}
+
 	setmetatable(module.genericMenuItem, {
 		__add = function(moduleTable, newTable)
 			local function TableCopy(t, deep, seen)
@@ -412,6 +498,7 @@ function prototype:SetUpMenu()
 			module.currentMenuPosition:Last()
 		end		
 		if aKey == skuKeyBinds.SKU_KEY_MENUITEMEXECUTE then
+			print("skuKeyBinds.SKU_KEY_MENUITEMEXECUTE")
 			module.currentMenuPosition:Action()
 		end
 		if aKey == skuKeyBinds.SKU_KEY_MENUITEMCLEARFILTER then
@@ -767,81 +854,35 @@ function prototype:BuildMenuContent()
 
 	audioMenu.menu.root.children = {}
 
+	--navigation
    local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"Navigation"}, audioMenu.genericMenuItem)
 	tNewMenuEntry.inCombatAvailable = true
-	   tNewMenuEntry.buildChildrenFunc = function(self)
+   tNewMenuEntry.buildChildrenFunc = function(self)
+
 	end
 
+	--auras
+	if Sku2.db.char.auras.enabled == true then
+		local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {Sku2.modules.auras.uiStruct.aurasMainMenu.title}, audioMenu.genericMenuItem)
+		tNewMenuEntry.buildChildrenFunc = Sku2.modules.auras.uiStruct.aurasMainMenu.menuBuilder
+	end
+	
+
+	--open panels
 	if Sku2.db.char.openPanels.enabled == true then
 		local openPanels = Sku2.modules.openPanels
 		local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {openPanels.uiStruct.openPanelsMain.title}, audioMenu.genericMenuItem)
 		tNewMenuEntry.inCombatAvailable = openPanels.uiStruct.openPanelsMain.inCombatAvailable
 		tNewMenuEntry.buildChildrenFunc = openPanels.uiStruct.openPanelsMain.menuBuilder
 	end
+
+	--settings
    local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"Settings"}, audioMenu.genericMenuItem)
 	tNewMenuEntry.inCombatAvailable = true
    tNewMenuEntry.buildChildrenFunc = function(self)
+
+
 	end
-
---[[
-	--<-------------- test menu start -----------------------------------
-   print("ADDING TEST MENU")
-   local audioMenu = Sku2.modules.audioMenu
-
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"open panels"}, audioMenu.genericMenuItem)
-   --tNewMenuEntry.buildChildrenFunc = Sku2.modules.bags.uiStruct.bagsMenu.menuBuilder
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"eins"}, audioMenu.genericMenuItem)
-   tNewMenuEntry.buildChildrenFunc = function(self)
-      local tNewMenuEntry = audioMenu:InjectMenuItems(self, {"Size"}, audioMenu.genericMenuItem)
-      tNewMenuEntry.dynamic = true
-      tNewMenuEntry.buildChildrenFunc = function(self)
-         local tNewMenuEntry = audioMenu:InjectMenuItems(self, {"Small"}, audioMenu.genericMenuItem)
-         tNewMenuEntry.onEnterCallbackFunc = function(self)
-            print(" xxx Small onEnterCallbackFunc")
-         end
-         local tNewMenuEntry = audioMenu:InjectMenuItems(self, {"Large"}, audioMenu.genericMenuItem)
-         tNewMenuEntry.inCombatAvailable = false
-         tNewMenuEntry.onEnterCallbackFunc = function(self)
-            print(" xxx Large onEnterCallbackFunc", self.name)
-         end
-         tNewMenuEntry.actionFunc = function(self)
-            print(" xxx Large actionFunc", self.name)
-            self:Update(self.name.." NEW")
-         end
-         local tNewMenuEntry = audioMenu:InjectMenuItems(self, {"Laroxx"}, audioMenu.genericMenuItem)
-         tNewMenuEntry.onEnterCallbackFunc = function(self)
-            print(" xxx Laroxx onEnterCallbackFunc", self.name)
-         end
-         tNewMenuEntry.actionFunc = function(self)
-            print(" xxx Laroxx actionFunc", self.name)
-            self:Update(self.name.." NEWXX")
-         end
-      end
-      local tNewMenuEntry = audioMenu:InjectMenuItems(self, {"Quests"}, audioMenu.genericMenuItem)
-      tNewMenuEntry.dynamic = true
-      tNewMenuEntry.buildChildrenFunc = function(self)
-         local tNewMenuEntry = audioMenu:InjectMenuItems(self, {"aaa", "bbb", "ccc"}, audioMenu.genericMenuItem)
-      end
-   end
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"zwei empty"}, audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"zwei aa empty"}, audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"zwei bb empty"}, audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"zwei bbc empty"}, audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"empty"}, audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"empty"}, audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"empty"}, audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"empty"}, audioMenu.genericMenuItem)
-   tNewMenuEntry.empty = true
-   local tNewMenuEntry = audioMenu:InjectMenuItems(audioMenu.menu.root, {"vier empty"}, audioMenu.genericMenuItem)
-   --<-------------- test menu end -----------------------------------
-]]
 
 
 

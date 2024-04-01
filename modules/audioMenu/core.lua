@@ -15,7 +15,6 @@ module.name = moduleName
 module.isSkuModule = true
 module.canBeDisabled = false
 module.dependencies = {
-	"audioMenu",
 }
 module.globalKeybinds = {
 }

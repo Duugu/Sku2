@@ -33,7 +33,7 @@ prototype.defaultItemButtonSubmenu = {
             Sku2.modules.audioMenu:ClearOutOfCombatActionButton()
          end            
          tNewMenuEntry.actionFunc = function(self)
-            print("actionFunc", self.name)
+            print("menu Left Click actionFunc", self.name)
             self.parent:Update()
          end
 
@@ -47,8 +47,8 @@ prototype.defaultItemButtonSubmenu = {
             Sku2.modules.audioMenu:ClearOutOfCombatActionButton()
          end            
          tNewMenuEntry.actionFunc = function(self)
-            print("actionFunc", self.name)
-            self.parent:Update()
+            print("RightButton actionFunc", self.name)
+            --self.parent:Update()
          end
 
          --socketing

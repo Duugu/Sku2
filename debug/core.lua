@@ -59,7 +59,8 @@ function Sku2.debug.Print(...)
          if tResultString:find("Sku Error") then
             originalPrint(tResultString)
          else
-            originalPrint("Sku debug ("..debugLevel..")", tResultString)
+            --originalPrint("Sku debug ("..debugLevel..")", tResultString)
+            originalPrint(tResultString)
          end
       end
    end

@@ -7,7 +7,6 @@ Sku2.modules[moduleName] = Sku2.modules[moduleName] or Sku2.modules:NewModule(mo
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- module data
 ---------------------------------------------------------------------------------------------------------------------------------------
---upvalue to reference the final module inside the function definitions
 local module = Sku2.modules[moduleName]
 
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -16,6 +15,7 @@ module.isSkuModule = true
 module.canBeDisabled = true
 module.dependencies = {
 	"audioMenu",
+	"openPanels"
 }
 module.globalKeybinds = { --["SOME SKU KEY CONST"] = some frame,
 }
@@ -42,6 +42,8 @@ function module:OnEnable()
 	for skuKeyBindName, frame in pairs(module.globalKeybinds) do
 		SetOverrideBindingClick(frame, true, Sku2.db.global.keyBindings.skuKeyBinds[skuKeyBindName], frame:GetName(), Sku2.db.global.keyBindings.skuKeyBinds[skuKeyBindName])
 	end
+
+	Sku2.modules.openPanels:RegisterModule(module, module.uiStruct.characterFrameMain, module.IsPanelOpen, "CharacterFrame")
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -51,6 +53,8 @@ function module:OnDisable()
 		Sku2.debug:Error(module.name.." OnDisable in combat! this should not happen")
 		return
 	end	
+
+	Sku2.modules.openPanels:UnregisterModule(module)
 
 	--remove all global key binds for module
 	for skuKeyBindName, frame in pairs(module.globalKeybinds) do

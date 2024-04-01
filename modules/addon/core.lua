@@ -7,7 +7,6 @@ Sku2.modules[moduleName] = Sku2.modules[moduleName] or Sku2.modules:NewModule(mo
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- module data
 ---------------------------------------------------------------------------------------------------------------------------------------
---upvalue to reference the final module inside the function definitions
 local module = Sku2.modules[moduleName]
 
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -15,7 +14,6 @@ module.name = moduleName
 module.isSkuModule = true
 module.canBeDisabled = true
 module.dependencies = {
-	"audioMenu",
 }
 module.globalKeybinds = { --["SOME SKU KEY CONST"] = some frame,
 }

@@ -9,14 +9,13 @@ local prototype = Sku2.modules[moduleName]._prototypes.UI
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- module UI
 ---------------------------------------------------------------------------------------------------------------------------------------
---upvalue to reference the final module inside the function definitions
 local module = Sku2.modules[moduleName]
 
 ---------------------------------------------------------------------------------------------------------------------------------------
-prototype.bagsMenu = {
+prototype.bagsMainMenu = {
 	flavors = {"classic", "era", "sod", "retail"},
-	title = "bagsMenu title",
-	desc = "bagsMenu desc",
+	title = "bags title",
+	desc = "bags desc",
 	menuBuilder = {
 		default = function(aParent)
 			local tNewMenuEntry = Sku2.modules.audioMenu:InjectMenuItems(aParent, {"bags"}, Sku2.modules.audioMenu.genericMenuItem)
@@ -31,10 +30,12 @@ prototype.bagsMenu = {
 							tNewMenuEntry.onEnterCallbackFunc = function(self)
 								print("slot "..y.."  onEnterCallbackFunc")
 							end
+							--[[
 							tNewMenuEntry.actionFunc = function(self)
 								print("bag "..x, "slot "..y, "actionFunc", self.name)
-								self:Update(self.name.." NEW")
+								--self:Update()
 							end
+							]]
 						end
 					end
 				end

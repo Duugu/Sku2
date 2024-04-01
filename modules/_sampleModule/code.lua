@@ -3,7 +3,7 @@ local moduleName = "_sampleModule"
 local L = Sku2.L
 
 Sku2.modules[moduleName]._prototypes = Sku2.modules[moduleName]._prototypes or {}
-Sku2.modules[moduleName]._prototypes.code = {}
+Sku2.modules[moduleName]._prototypes.code = Sku2.modules[moduleName]._prototypes.code or {}
 local prototype = Sku2.modules[moduleName]._prototypes.code
 
 --[[
@@ -43,15 +43,13 @@ prototype.testtable.retail = {
 --every module needs have a SetUpModule function that is called on modules OnInitilize
 function prototype:SetUpModule()
 	print(moduleName, "SetUpModule", self)
-	--every module for Open Panels needs to register at openPanels module with its main buildChildrenFunc to be considered by openPanels module
-	--Sku2.modules.openPanels:RegisterModule(module, module.uiStruct.<some menu>, module.IsPanelOpen)
 
 	--add keys & frame refs to module.globalKeybinds here (ex. module.globalKeybinds["SOME_SKU_KEY_CONST"] = somesecureframeref)
 	
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
---for use with Sku2.modules.openPanels:RegisterModule above. is called on Open Panels menu updates
+--for use with Sku2.modules.openPanels:RegisterModule. Is called on Open Panels menu updates
 --[[
 function prototype:IsPanelOpen()
 	print(moduleName, "IsPanelOpen", self)
